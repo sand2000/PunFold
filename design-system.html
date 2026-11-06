@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PubFold Design System</title>
+<meta name="description" content="ระบบการออกแบบของ PubFold ผู้ช่วยจัดระเบียบชีวิตที่ให้ พับ พับข้อความแชทเป็นจดหมายแล้วส่งถึงตู้จดหมายตามหมวด">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style id="ds-styles">
+:root {
+  /* palette */
+  --color-background: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-cream: #F6F0E4;
+  --color-primary: #5B7948;
+  --color-secondary: #EAF0E4;
+  --color-accent: #73523E;
+  --color-text: #2D2823;
+  --color-text-muted: #625B52;
+  --color-border: #DED6C9;
+
+  /* derived states (opacity / mix of palette tokens only) */
+  --color-primary-hover: color-mix(in srgb, var(--color-primary) 82%, var(--color-text));
+  --color-accent-hover: color-mix(in srgb, var(--color-accent) 82%, var(--color-text));
+  --color-secondary-hover: color-mix(in srgb, var(--color-secondary) 78%, var(--color-primary));
+  --color-overlay: color-mix(in srgb, var(--color-text) 55%, transparent);
+
+  /* control outline: --color-border is too light (1.4:1), so controls use text-muted (6.7:1) */
+  --control-border-color: var(--color-text-muted);
+  --control-border-width: 1.5px;
+
+  /* typography */
+  --font-family-base: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-size-h1: 32px;
+  --font-size-h2: 24px;
+  --font-size-h3: 20px;
+  --font-size-body: 16px;
+  --font-size-small: 14px;
+  --line-height-h1: 44px;
+  --line-height-h2: 34px;
+  --line-height-h3: 30px;
+  --line-height-body: 28px;
+  --line-height-small: 24px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* elevation */
+  --shadow-1: 0 1px 2px color-mix(in srgb, var(--color-text) 8%, transparent), 0 2px 8px color-mix(in srgb, var(--color-text) 6%, transparent);
+  --shadow-2: 0 4px 12px color-mix(in srgb, var(--color-text) 10%, transparent), 0 16px 40px color-mix(in srgb, var(--color-text) 14%, transparent);
+
+  /* focus */
+  --focus-ring-color: var(--color-accent);
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring: var(--focus-ring-width) solid var(--focus-ring-color);
+
+  /* touch targets */
+  --touch-target-s: 44px;
+  --touch-target-m: 48px;
+  --touch-target-l: 56px;
+
+  /* motion */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 1800ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  overflow-wrap: break-word;
+}
+body:has(dialog[open]) { overflow: hidden; }
+[hidden] { display: none !important; }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+svg { display: block; flex: none; }
+.icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.icon--s { width: 20px; height: 20px; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+a { color: var(--color-primary); text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+a:hover { color: var(--color-primary-hover); }
+code, .mono { font-family: var(--font-family-mono); font-size: 0.875em; }
+
+:focus-visible, .is-focus { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+:focus:not(:focus-visible) { outline: none; }
+
+.skip-link { position: absolute; left: var(--space-4); top: -80px; z-index: 100; background: var(--color-surface); color: var(--color-text); padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); border: var(--control-border-width) solid var(--control-border-color); }
+.skip-link:focus { top: var(--space-2); }
+
+/* ---------- layout ---------- */
+.container { width: 100%; max-width: 960px; margin-inline: auto; padding-inline: var(--space-4); }
+@media (min-width: 720px) { .container { padding-inline: var(--space-6); } }
+
+.site-header { padding-block: var(--space-5) var(--space-4); }
+.brand { display: flex; align-items: center; gap: var(--space-3); }
+.brand__name { font-weight: var(--font-weight-bold); font-size: var(--font-size-h3); line-height: var(--line-height-h3); }
+.brand__tag { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); }
+
+.section-nav { position: sticky; top: 0; z-index: 20; background: var(--color-background); border-block: 1px solid var(--color-border); }
+.section-nav ul { display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-2) var(--space-4); scrollbar-width: thin; }
+@media (min-width: 720px) { .section-nav ul { padding-inline: max(var(--space-6), calc((100% - 960px) / 2 + var(--space-6))); } }
+.chip-link { display: inline-flex; align-items: center; min-height: var(--touch-target-s); min-width: var(--touch-target-s); padding: 0 var(--space-4); border-radius: var(--radius-pill); color: var(--color-text); text-decoration: none; white-space: nowrap; font-size: var(--font-size-small); font-weight: var(--font-weight-medium); border: 1px solid transparent; }
+.chip-link:hover { background: var(--color-secondary); border-color: var(--color-primary); color: var(--color-text); }
+
+.hero { padding-block: var(--space-6) calc(var(--space-6) * 1.5); display: grid; gap: var(--space-5); }
+.hero__art { display: flex; align-items: flex-end; gap: var(--space-3); color: var(--color-primary); }
+.hero__bird { width: 112px; height: 112px; }
+.hero__leaf { width: 40px; height: 40px; }
+.hero__eyebrow { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.hero p.lead { max-width: 56ch; color: var(--color-text-muted); margin-top: var(--space-3); }
+.hero__quote { display: inline-block; margin-top: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--color-cream); border: 1px solid var(--color-border); border-radius: var(--radius-lg); font-weight: var(--font-weight-medium); }
+
+section.block { padding-top: calc(var(--space-6) * 2); border-top: 1px solid var(--color-border); scroll-margin-top: 64px; }
+section.block > .container > header { margin-bottom: var(--space-5); }
+.section-no { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.section-desc { color: var(--color-text-muted); margin-top: var(--space-2); max-width: 60ch; }
+main > section.block:last-of-type { padding-bottom: calc(var(--space-6) * 2); }
+
+h1 { font-size: var(--font-size-h1); line-height: var(--line-height-h1); font-weight: var(--font-weight-bold); }
+h2 { font-size: var(--font-size-h2); line-height: var(--line-height-h2); font-weight: var(--font-weight-semibold); }
+h3 { font-size: var(--font-size-h3); line-height: var(--line-height-h3); font-weight: var(--font-weight-semibold); }
+h4 { font-size: var(--font-size-body); line-height: var(--line-height-body); font-weight: var(--font-weight-semibold); }
+.small { font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.muted { color: var(--color-text-muted); }
+
+.comp { margin-top: calc(var(--space-6) * 1.5); }
+.comp:first-of-type { margin-top: 0; }
+.comp > h3 { margin-bottom: var(--space-2); }
+.comp > .comp__desc { color: var(--color-text-muted); margin-bottom: var(--space-4); max-width: 60ch; }
+.demo { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); display: grid; gap: var(--space-5); min-width: 0; }
+@media (min-width: 720px) { .demo { padding: var(--space-5); } }
+.demo-label { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); margin-bottom: var(--space-2); font-weight: var(--font-weight-medium); }
+.row { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-start; }
+.row--tight { gap: var(--space-2); }
+.cell { display: grid; gap: var(--space-1); justify-items: start; min-width: 0; }
+.cell > .small { color: var(--color-text-muted); }
+
+/* usage guideline */
+.guide { margin-top: var(--space-4); display: grid; gap: var(--space-3); }
+@media (min-width: 640px) { .guide { grid-template-columns: 1fr 1fr; } }
+.guide__col { border-radius: var(--radius-md); padding: var(--space-4); border: 1px solid var(--color-border); min-width: 0; }
+.guide__col--do { background: var(--color-secondary); }
+.guide__col--dont { background: var(--color-cream); }
+.guide__col h4 { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
+.guide__col--do h4 .icon { color: var(--color-primary); }
+.guide__col--dont h4 .icon { color: var(--color-accent); }
+.guide__col p { font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.guide__eg { display: block; margin-top: var(--space-2); color: var(--color-text-muted); }
+
+/* ---------- tokens ---------- */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: var(--space-3); }
+.swatch { display: grid; gap: var(--space-2); align-content: start; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-2); background: var(--color-surface); min-width: 0; }
+.swatch__chip { height: 64px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); }
+.swatch__name { font-family: var(--font-family-mono); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; font-weight: var(--font-weight-medium); }
+.swatch__hex { font-family: var(--font-family-mono); font-size: var(--font-size-small); line-height: var(--line-height-small); user-select: all; }
+.swatch__role { font-size: 13px; line-height: 20px; color: var(--color-text-muted); }
+.swatch .btn { width: 100%; }
+
+.token-grid { display: grid; gap: var(--space-5); }
+@media (min-width: 720px) { .token-grid--2 { grid-template-columns: 1fr 1fr; } }
+.space-row { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: var(--space-3); min-height: 28px; }
+.space-bar { height: 16px; background: var(--color-primary); border-radius: 2px; }
+.radius-box, .shadow-box { height: 80px; display: grid; place-items: center; text-align: center; font-size: var(--font-size-small); line-height: var(--line-height-small); padding: var(--space-2); }
+.radius-box { background: var(--color-cream); border: 1.5px solid var(--color-accent); }
+.shadow-box { background: var(--color-surface); border-radius: var(--radius-md); }
+.focus-sample { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--color-surface); border: var(--control-border-width) solid var(--control-border-color); }
+
+.contrast-note { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: var(--font-weight-semibold); }
+.contrast-note .icon { width: 18px; height: 18px; }
+.contrast-sample { display: inline-grid; place-items: center; min-width: 44px; min-height: 32px; padding: 0 var(--space-2); border-radius: var(--radius-sm); border: 1px solid var(--color-border); font-weight: var(--font-weight-semibold); }
+
+/* ---------- typography ---------- */
+.type-row { padding-block: var(--space-4); border-bottom: 1px solid var(--color-border); display: grid; gap: var(--space-2); }
+.type-row:first-child { padding-top: 0; }
+.type-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.type-spec { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.type-spec b { color: var(--color-text); font-weight: var(--font-weight-semibold); }
+
+/* ---------- buttons ---------- */
+.btn {
+  --btn-bg: var(--color-primary); --btn-fg: var(--color-surface); --btn-bd: var(--color-primary);
+  --btn-bg-hover: var(--color-primary-hover); --btn-fg-hover: var(--color-surface); --btn-bd-hover: var(--color-primary-hover);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: var(--touch-target-m); min-width: var(--touch-target-s); padding: 0 var(--space-5);
+  border: var(--control-border-width) solid var(--btn-bd); border-radius: var(--radius-md);
+  background: var(--btn-bg); color: var(--btn-fg);
+  font-size: var(--font-size-body); font-weight: var(--font-weight-semibold); line-height: 1.3; text-align: center;
+  cursor: pointer; text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.btn:hover, .btn.is-hover { background: var(--btn-bg-hover); color: var(--btn-fg-hover); border-color: var(--btn-bd-hover); }
+.btn:active { box-shadow: inset 0 2px 4px color-mix(in srgb, var(--color-text) 20%, transparent); }
+.btn--secondary { --btn-bg: var(--color-secondary); --btn-fg: var(--color-text); --btn-bd: var(--color-primary); --btn-bg-hover: var(--color-secondary-hover); --btn-fg-hover: var(--color-text); --btn-bd-hover: var(--color-primary); }
+.btn--ghost { --btn-bg: transparent; --btn-fg: var(--color-primary); --btn-bd: transparent; --btn-bg-hover: var(--color-secondary); --btn-fg-hover: var(--color-text); --btn-bd-hover: var(--color-secondary); }
+.btn--destructive { --btn-bg: var(--color-accent); --btn-fg: var(--color-surface); --btn-bd: var(--color-accent); --btn-bg-hover: var(--color-accent-hover); --btn-fg-hover: var(--color-surface); --btn-bd-hover: var(--color-accent-hover); }
+.btn--s { min-height: var(--touch-target-s); padding: 0 var(--space-4); font-size: var(--font-size-small); }
+.btn--l { min-height: var(--touch-target-l); padding: 0 var(--space-6); font-size: 18px; }
+.btn:disabled, .btn[aria-disabled="true"] { --btn-bg: var(--color-cream); --btn-fg: var(--color-text-muted); --btn-bd: var(--color-border); cursor: not-allowed; background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bd); box-shadow: none; }
+.btn[aria-busy="true"] { cursor: progress; pointer-events: none; }
+.btn--icon { padding: 0; width: var(--touch-target-m); }
+.btn--icon.btn--s { width: var(--touch-target-s); }
+
+.spinner { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- form controls ---------- */
+.field { display: grid; gap: var(--space-2); min-width: 0; }
+.field__label { font-weight: var(--font-weight-medium); }
+.field__help, .field__error { font-size: var(--font-size-small); line-height: var(--line-height-small); display: flex; gap: var(--space-2); align-items: flex-start; }
+.field__help { color: var(--color-text-muted); }
+.field__error { color: var(--color-accent); font-weight: var(--font-weight-medium); }
+.field__error .icon { width: 20px; height: 20px; margin-top: 2px; }
+.input {
+  width: 100%; min-height: var(--touch-target-m); padding: var(--space-2) var(--space-4);
+  background: var(--color-surface); color: var(--color-text);
+  border: var(--control-border-width) solid var(--control-border-color); border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.input::placeholder { color: var(--color-text-muted); opacity: 1; }
+.input:hover { border-color: var(--color-text); }
+.input[aria-invalid="true"] { border-color: var(--color-accent); border-width: 2.5px; padding-inline: calc(var(--space-4) - 1px); }
+.input:disabled { background: var(--color-cream); border-color: var(--color-border); color: var(--color-text-muted); cursor: not-allowed; }
+textarea.input { resize: vertical; min-height: 96px; }
+.select-wrap { position: relative; }
+.select-wrap select { appearance: none; -webkit-appearance: none; padding-right: 48px; cursor: pointer; }
+.select-wrap .icon { position: absolute; right: var(--space-4); top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--color-text); }
+
+.check { display: flex; align-items: center; gap: var(--space-3); min-height: var(--touch-target-s); cursor: pointer; }
+.check__input { appearance: none; -webkit-appearance: none; flex: none; display: grid; place-content: center; width: 24px; height: 24px; margin: 0; background: var(--color-surface); border: var(--control-border-width) solid var(--control-border-color); border-radius: 6px; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-standard); }
+.check__input::after { content: ""; width: 7px; height: 13px; border: solid var(--color-surface); border-width: 0 2.5px 2.5px 0; transform: translateY(-1px) rotate(45deg); display: none; }
+.check__input:checked { background: var(--color-primary); border-color: var(--color-primary); }
+.check__input:checked::after { display: block; }
+.check:hover .check__input:not(:disabled) { border-color: var(--color-text); }
+.check__input:disabled { background: var(--color-cream); border-color: var(--color-border); cursor: not-allowed; }
+.check__input:disabled + .check__text { color: var(--color-text-muted); }
+.check:has(.check__input:disabled) { cursor: not-allowed; }
+
+.badge { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 28px; padding: 0 var(--space-3) 0 var(--space-2); border-radius: var(--radius-pill); font-size: var(--font-size-small); font-weight: var(--font-weight-semibold); line-height: 1.2; border: 1.5px solid; white-space: nowrap; }
+.badge .icon { width: 18px; height: 18px; }
+.badge--success { background: var(--color-secondary); border-color: var(--color-primary); color: var(--color-text); }
+.badge--success .icon { color: var(--color-primary); }
+.badge--warning { background: var(--color-cream); border-color: var(--color-accent); color: var(--color-text); }
+.badge--warning .icon { color: var(--color-accent); }
+.badge--error { background: var(--color-surface); border-color: var(--color-accent); border-style: dashed; color: var(--color-accent); }
+
+/* cards */
+.cards { display: grid; gap: var(--space-4); }
+@media (min-width: 720px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+.card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); box-shadow: var(--shadow-1); display: grid; gap: var(--space-2); align-content: start; min-width: 0; }
+.card--paper { background: var(--color-cream); box-shadow: none; }
+.card--interactive { cursor: pointer; text-align: left; width: 100%; transition: box-shadow var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard); }
+.card--interactive:hover { box-shadow: var(--shadow-2); border-color: var(--color-primary); }
+.card__meta { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.card__head { display: flex; justify-content: space-between; gap: var(--space-2); align-items: flex-start; }
+
+/* modal */
+dialog { padding: 0; border: 0; border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-2); width: calc(100% - var(--space-6)); max-width: 440px; }
+dialog::backdrop { background: var(--color-overlay); }
+.dialog__head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); padding: var(--space-5) var(--space-5) 0; }
+.dialog__body { padding: var(--space-3) var(--space-5) var(--space-4); color: var(--color-text-muted); }
+.dialog__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); padding: var(--space-4) var(--space-5) var(--space-5); border-top: 1px solid var(--color-border); }
+.dialog__foot .btn { flex: 1 1 140px; }
+
+/* table */
+.table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); max-width: 100%; }
+.table { width: 100%; min-width: 560px; border-collapse: separate; border-spacing: 0; text-align: left; }
+.table caption { text-align: left; padding: var(--space-3) var(--space-4); font-weight: var(--font-weight-semibold); caption-side: top; }
+.table th, .table td { padding: var(--space-3) var(--space-4); border-top: 1px solid var(--color-border); vertical-align: middle; font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.table thead th { background: var(--color-cream); font-weight: var(--font-weight-semibold); white-space: nowrap; }
+.table tbody th { font-weight: var(--font-weight-semibold); background: var(--color-surface); position: sticky; left: 0; border-right: 1px solid var(--color-border); }
+.table thead th:first-child { position: sticky; left: 0; border-right: 1px solid var(--color-border); }
+.table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- PubFold patterns ---------- */
+.phone { width: 100%; max-width: 420px; margin-inline: auto; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); overflow: hidden; display: grid; min-width: 0; }
+.thread { background: var(--color-cream); padding: var(--space-4); display: grid; gap: var(--space-3); align-content: start; height: 320px; overflow-y: auto; }
+.msg { display: flex; gap: var(--space-2); align-items: flex-end; min-width: 0; }
+.msg--user { justify-content: flex-end; }
+.msg__avatar { width: 36px; height: 36px; flex: none; }
+.bubble { padding: var(--space-2) var(--space-4); border-radius: var(--radius-lg); max-width: 85%; min-width: 0; }
+.bubble--bird { background: var(--color-surface); border: 1px solid var(--color-border); border-bottom-left-radius: var(--radius-sm); }
+.bubble--user { background: var(--color-primary); color: var(--color-surface); border-bottom-right-radius: var(--radius-sm); }
+.composer { display: grid; gap: var(--space-2); padding: var(--space-3); border-top: 1px solid var(--color-border); background: var(--color-surface); }
+.composer__row { display: flex; gap: var(--space-2); align-items: flex-end; }
+.composer__row .input { flex: 1; min-height: var(--touch-target-m); max-height: 120px; resize: none; line-height: var(--line-height-body); }
+.composer__samples { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.delivery { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); display: grid; gap: var(--space-3); box-shadow: var(--shadow-1); min-width: 0; width: 100%; }
+.delivery__track { position: relative; display: flex; align-items: center; justify-content: space-between; height: 52px; color: var(--color-primary); }
+.delivery__bird { width: 48px; height: 48px; }
+.delivery__line { position: absolute; left: 56px; right: 56px; top: 50%; border-top: 2px dashed var(--color-border); }
+.delivery__box { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--color-cream); border: 1.5px solid var(--color-border); transition: background-color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard); }
+.delivery.is-done .delivery__box { background: var(--color-secondary); border-color: var(--color-primary); }
+.delivery__env { position: absolute; left: 56px; top: 50%; width: 30px; height: 22px; margin-top: -11px; opacity: 0; }
+.delivery.is-flying .delivery__env { opacity: 1; animation: fly var(--duration-slow) var(--ease-standard) forwards; }
+@keyframes fly { from { left: 56px; } to { left: calc(100% - 56px - 30px); } }
+.delivery__title { display: flex; gap: var(--space-2); align-items: flex-start; font-weight: var(--font-weight-semibold); }
+.delivery__title .icon { color: var(--color-primary); margin-top: 2px; }
+.delivery:not(.is-done) .delivery__title .icon { color: var(--color-accent); }
+.delivery__quote { background: var(--color-cream); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); font-size: var(--font-size-small); line-height: var(--line-height-small); overflow-wrap: anywhere; }
+.delivery__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.delivery__actions .btn { flex: 1 1 auto; }
+.delivery__status { font-size: var(--font-size-small); line-height: var(--line-height-small); color: var(--color-text-muted); min-height: var(--line-height-small); }
+
+.mailboxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: var(--space-3); }
+.mailbox { display: grid; gap: var(--space-1); justify-items: start; text-align: left; padding: var(--space-4); background: var(--color-cream); border: 1.5px solid var(--color-border); border-radius: var(--radius-lg); cursor: pointer; min-height: 132px; align-content: start; min-width: 0; transition: background-color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard); }
+.mailbox:hover { border-color: var(--color-primary); }
+.mailbox__icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--color-surface); color: var(--color-primary); border: 1px solid var(--color-border); margin-bottom: var(--space-1); }
+.mailbox__name { font-weight: var(--font-weight-semibold); font-size: var(--font-size-body); }
+.mailbox__count { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.mailbox__tag { display: none; align-items: center; gap: var(--space-1); font-size: 13px; line-height: 20px; font-weight: var(--font-weight-semibold); }
+.mailbox__tag .icon { width: 16px; height: 16px; color: var(--color-primary); }
+.mailbox[aria-pressed="true"] { background: var(--color-secondary); border-color: var(--color-primary); border-width: 2.5px; padding: calc(var(--space-4) - 1px); }
+.mailbox[aria-pressed="true"] .mailbox__tag { display: inline-flex; }
+
+.tabbar-status { text-align: center; color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); padding: var(--space-4); background: var(--color-cream); min-height: 96px; display: grid; place-items: center; }
+.tabbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-1); padding: var(--space-2); border-top: 1px solid var(--color-border); background: var(--color-surface); }
+.tab { display: grid; justify-items: center; align-content: center; gap: 2px; min-height: var(--touch-target-l); min-width: var(--touch-target-s); padding: var(--space-1); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-muted); cursor: pointer; font-size: 13px; line-height: 20px; font-weight: var(--font-weight-medium); }
+.tab:hover { background: var(--color-secondary); color: var(--color-text); }
+.tab[aria-current="page"] { background: var(--color-secondary); color: var(--color-text); font-weight: var(--font-weight-bold); }
+.tab .icon { color: currentColor; }
+.tab[aria-current="page"] .icon { color: var(--color-primary); stroke-width: 2.25; }
+
+.lifeboard { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.lb-card { display: grid; gap: var(--space-2); align-content: start; text-align: left; padding: var(--space-4); min-height: 148px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); cursor: pointer; min-width: 0; transition: box-shadow var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard); }
+.lb-card:hover { box-shadow: var(--shadow-2); border-color: var(--color-primary); }
+.lb-card__icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-secondary); color: var(--color-primary); }
+.lb-card__title { font-weight: var(--font-weight-semibold); }
+.lb-card__preview { color: var(--color-text-muted); font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.lb-card--paper { background: var(--color-cream); }
+.lb-card--paper .lb-card__icon { background: var(--color-surface); }
+
+/* export */
+.code-box { width: 100%; min-height: 240px; font-family: var(--font-family-mono); font-size: 13px; line-height: 20px; white-space: pre; overflow: auto; }
+.notice { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-cream); border: 1.5px solid var(--color-accent); }
+.notice .icon { color: var(--color-accent); margin-top: 2px; }
+
+/* toast */
+.toast { position: fixed; left: 50%; bottom: var(--space-4); z-index: 200; transform: translate(-50%, 24px); max-width: calc(100% - var(--space-6)); width: max-content; display: flex; gap: var(--space-2); align-items: flex-start; padding: var(--space-3) var(--space-4); background: var(--color-text); color: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-2); opacity: 0; visibility: hidden; transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard), visibility 0s linear var(--duration-base); font-size: var(--font-size-small); line-height: var(--line-height-small); }
+.toast.is-visible { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition-delay: 0s; }
+.toast .icon { width: 20px; height: 20px; margin-top: 2px; }
+
+.site-footer { border-top: 1px solid var(--color-border); padding-block: var(--space-6); color: var(--color-text-muted); display: flex; gap: var(--space-3); align-items: center; }
+.site-footer .icon { color: var(--color-primary); width: 32px; height: 32px; }
+
+/* bird + envelope symbols */
+.bird-body { fill: var(--color-cream); stroke: var(--color-accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.bird-beak { fill: var(--color-accent); }
+.bird-eye { fill: var(--color-text); }
+.bird-satchel { fill: var(--color-accent); }
+.bird-line { fill: none; stroke: var(--color-accent); stroke-width: 2.5; stroke-linecap: round; }
+.bird-flap { fill: none; stroke: var(--color-cream); stroke-width: 2; stroke-linecap: round; }
+.env-body { fill: var(--color-cream); stroke: var(--color-accent); stroke-width: 1.75; stroke-linejoin: round; }
+.env-fold { fill: none; stroke: var(--color-accent); stroke-width: 1.75; stroke-linejoin: round; stroke-linecap: round; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; }
+  .spinner { animation: none; border-right-color: currentColor; border-style: dotted; }
+  .delivery.is-flying .delivery__env { animation: none; left: 50%; }
+  .toast { transform: translate(-50%, 0); }
+}
+@media (forced-colors: active) {
+  .btn, .input, .check__input, .badge, .card, .mailbox, .lb-card { border: 2px solid ButtonText; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SVG sprite ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="pub-bird" viewBox="0 0 96 96">
+      <path class="bird-body" d="M22 58 L5 66 L25 73 Z"/>
+      <ellipse class="bird-body" cx="46" cy="58" rx="28" ry="23"/>
+      <path class="bird-body" d="M31 56 C44 46 58 52 62 62 C50 74 36 68 31 56 Z"/>
+      <circle class="bird-body" cx="62" cy="33" r="17"/>
+      <path class="bird-body" d="M56 18 C57 9 64 6 69 9 C65 11 64 14 65 17 Z"/>
+      <path class="bird-beak" d="M77 31 L90 36 L77 42 Z"/>
+      <circle class="bird-eye" cx="68" cy="31" r="2.6"/>
+      <path class="bird-line" d="M50 44 L38 68"/>
+      <rect class="bird-satchel" x="28" y="64" width="28" height="19" rx="4"/>
+      <path class="bird-flap" d="M31 70 H53"/>
+      <path class="bird-line" d="M40 81 V90 M52 81 V90"/>
+    </symbol>
+    <symbol id="pub-envelope" viewBox="0 0 32 24">
+      <rect class="env-body" x="1.5" y="1.5" width="29" height="21" rx="3"/>
+      <path class="env-fold" d="M3 5 L16 14 L29 5"/>
+    </symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19c3-4 6-7 10-9"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-4 3v-3H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></symbol>
+    <symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-mailbox" viewBox="0 0 24 24"><path d="M4 20V10a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v10z"/><path d="M8.5 11h7M9 20v-4h6v4"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5 22 20H2z"/><path d="M12 10v4.5M12 17.4v.2"/></symbol>
+    <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.2C14 8.4 13.100 8 12 8c-1.500 0-2.500.8-2.500 2s1 1.700 2.500 2 2.500.8 2.500 2-1 2-2.500 2c-1.100 0-2-.4-2.500-1.200M12 6.500V8M12 16v1.500"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-8-4.800-8-10.500A4.500 4.500 0 0 1 12 7a4.500 4.500 0 0 1 8 2.500C20 15.200 12 20 12 20z"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.500 10.900c.6.500 1 1.200 1 2.100h5c0-.9.4-1.600 1-2.100A6 6 0 0 0 12 3z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100-4.400-4.300 6.100-.9z"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1.500"/><rect x="3" y="7" width="18" height="3" rx="1"/><path d="M12 7v13M12 7c-1-3-5-3.500-5-1.500S10 7 12 7zm0 0c1-3 5-3.500 5-1.500S14 7 12 7z"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="m4 20 1-4L16.500 4.500a2 2 0 0 1 3 3L8 19zM14 7l3 3"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#main">ข้ามไปยังเนื้อหาหลัก</a>
+
+<header class="site-header">
+  <div class="container">
+    <div class="brand">
+      <svg width="48" height="48" role="img" aria-label="พับ นกพิราบสื่อสารสีครีมสะพายกระเป๋าหนังสีน้ำตาล"><use href="#pub-bird"/></svg>
+      <div>
+        <div class="brand__name">PubFold</div>
+        <div class="brand__tag">ระบบการออกแบบ · เวอร์ชัน 1.0</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="section-nav" aria-label="สารบัญหน้านี้">
+  <ul>
+    <li><a class="chip-link" href="#tokens">โทเคน</a></li>
+    <li><a class="chip-link" href="#typography">ตัวอักษร</a></li>
+    <li><a class="chip-link" href="#components">คอมโพเนนต์</a></li>
+    <li><a class="chip-link" href="#patterns">แพตเทิร์น PubFold</a></li>
+    <li><a class="chip-link" href="#export">ส่งออก tokens</a></li>
+  </ul>
+</nav>
+
+<main id="main">
+  <div class="container">
+    <div class="hero">
+      <div class="hero__art" aria-hidden="true">
+        <svg class="hero__bird"><use href="#pub-bird"/></svg>
+        <svg class="icon hero__leaf"><use href="#i-leaf"/></svg>
+      </div>
+      <div>
+        <p class="hero__eyebrow">PubFold · แอปจัดระเบียบชีวิตแบบมือถือเป็นหลัก</p>
+        <h1>ระบบการออกแบบ PubFold</h1>
+        <p class="lead">ให้ <strong>พับ</strong> นกพิราบสื่อสารสีครีมพับข้อความในแชทใส่ซองจดหมาย แล้วบินไปส่งถึงตู้จดหมายตามหมวดหมู่ เอกสารนี้รวมโทเคน คอมโพเนนต์ และแนวทางใช้งานที่ทีมใช้ร่วมกัน</p>
+        <p class="hero__quote">“พิมพ์มา เดี๋ยวพับเก็บให้”</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 1. TOKENS ================= -->
+  <section class="block" id="tokens" aria-labelledby="tokens-h">
+    <div class="container">
+      <header>
+        <p class="section-no">ส่วนที่ 1</p>
+        <h2 id="tokens-h">โทเคนพื้นฐาน</h2>
+        <p class="section-desc">ค่าทั้งหมดประกาศเป็น CSS custom properties ใน <code>:root</code> กดปุ่ม “คัดลอก” เพื่อนำโทเคนสีไปใช้ต่อได้ทันที</p>
+      </header>
+
+      <div class="comp">
+        <h3>สี</h3>
+        <p class="comp__desc">ใช้เฉพาะ 9 สีนี้ สีสถานะอื่น ๆ ได้จากการผสมหรือปรับความโปร่งใสของโทเคนเหล่านี้เท่านั้น</p>
+        <div class="demo">
+          <div class="swatches" id="swatches">
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-background)"></div><span class="swatch__name">--color-background</span><span class="swatch__hex">#FFFFFF</span><span class="swatch__role">พื้นหลังหลักของหน้า</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-background" data-copy-value="#FFFFFF"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-background</span></button></div>
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-surface)"></div><span class="swatch__name">--color-surface</span><span class="swatch__hex">#FFFFFF</span><span class="swatch__role">ฟอร์ม กล่องโต้ตอบ พื้นผิวยก</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-surface" data-copy-value="#FFFFFF"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-surface</span></button></div>
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-cream)"></div><span class="swatch__name">--color-cream</span><span class="swatch__hex">#F6F0E4</span><span class="swatch__role">การ์ดกระดาษ ซองจดหมาย ขนนกพับ</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-cream" data-copy-value="#F6F0E4"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-cream</span></button></div>
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-primary)"></div><span class="swatch__name">--color-primary</span><span class="swatch__hex">#5B7948</span><span class="swatch__role">ปุ่มหลัก ลิงก์ ไอคอนหมวดหมู่</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-primary" data-copy-value="#5B7948"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-primary</span></button></div>
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-secondary)"></div><span class="swatch__name">--color-secondary</span><span class="swatch__hex">#EAF0E4</span><span class="swatch__role">ปุ่มรอง สถานะที่เลือก ตู้ปลายทาง</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-secondary" data-copy-value="#EAF0E4"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-secondary</span></button></div>
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-accent)"></div><span class="swatch__name">--color-accent</span><span class="swatch__hex">#73523E</span><span class="swatch__role">กระเป๋าสะพาย รายละเอียดสีน้ำตาล ปุ่มลบ</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-accent" data-copy-value="#73523E"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-accent</span></button></div>
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-text)"></div><span class="swatch__name">--color-text</span><span class="swatch__hex">#2D2823</span><span class="swatch__role">ข้อความหลัก</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-text" data-copy-value="#2D2823"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-text</span></button></div>
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-text-muted)"></div><span class="swatch__name">--color-text-muted</span><span class="swatch__hex">#625B52</span><span class="swatch__role">ข้อความรอง และขอบช่องกรอก</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-text-muted" data-copy-value="#625B52"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-text-muted</span></button></div>
+            <div class="swatch"><div class="swatch__chip" style="background:var(--color-border)"></div><span class="swatch__name">--color-border</span><span class="swatch__hex">#DED6C9</span><span class="swatch__role">เส้นแบ่งและขอบตกแต่งเท่านั้น</span><button type="button" class="btn btn--secondary btn--s" data-copy-token="--color-border" data-copy-value="#DED6C9"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span class="btn__label">คัดลอก</span><span class="visually-hidden"> --color-border</span></button></div>
+          </div>
+        </div>
+
+        <div class="demo" style="margin-top:var(--space-4)">
+          <div>
+            <h4>ตรวจคอนทราสต์ตามเกณฑ์ WCAG AA</h4>
+            <p class="small muted">ค่าคำนวณสดจากโทเคนในหน้านี้ ข้อความต้อง ≥ 4.5 : 1 ส่วนขอบของตัวควบคุมต้อง ≥ 3 : 1</p>
+          </div>
+          <div class="table-wrap" role="region" aria-label="ตารางคอนทราสต์ของคู่สี เลื่อนซ้ายขวาได้" tabindex="0">
+            <table class="table" id="contrast-table">
+              <caption class="visually-hidden">คอนทราสต์ของคู่สีที่ใช้ใน PubFold</caption>
+              <thead><tr><th scope="col">คู่สี</th><th scope="col">ใช้กับ</th><th scope="col" class="num">อัตราส่วน</th><th scope="col">ผล</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <h3>ระยะห่าง รัศมีมุม และเงา</h3>
+        <div class="demo">
+          <div class="token-grid token-grid--2">
+            <div>
+              <p class="demo-label">ระยะห่าง (spacing)</p>
+              <div class="space-row"><span class="mono small">--space-1 · 4</span><span class="space-bar" style="width:var(--space-1)"></span></div>
+              <div class="space-row"><span class="mono small">--space-2 · 8</span><span class="space-bar" style="width:var(--space-2)"></span></div>
+              <div class="space-row"><span class="mono small">--space-3 · 12</span><span class="space-bar" style="width:var(--space-3)"></span></div>
+              <div class="space-row"><span class="mono small">--space-4 · 16</span><span class="space-bar" style="width:var(--space-4)"></span></div>
+              <div class="space-row"><span class="mono small">--space-5 · 24</span><span class="space-bar" style="width:var(--space-5)"></span></div>
+              <div class="space-row"><span class="mono small">--space-6 · 32</span><span class="space-bar" style="width:var(--space-6)"></span></div>
+            </div>
+            <div>
+              <p class="demo-label">รัศมีมุม (radius)</p>
+              <div class="row row--tight" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)">
+                <div class="radius-box" style="border-radius:var(--radius-sm)"><span class="mono">8 px<br>--radius-sm</span></div>
+                <div class="radius-box" style="border-radius:var(--radius-md)"><span class="mono">12 px<br>--radius-md</span></div>
+                <div class="radius-box" style="border-radius:var(--radius-lg)"><span class="mono">18 px<br>--radius-lg</span></div>
+              </div>
+              <p class="small muted" style="margin-top:var(--space-2)">8 px สำหรับชิ้นส่วนเล็ก · 12 px สำหรับปุ่มและช่องกรอก · 18 px สำหรับการ์ดและกล่องโต้ตอบ</p>
+            </div>
+          </div>
+          <div>
+            <p class="demo-label">ความสูง (elevation) 2 ระดับ</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);padding:var(--space-2)">
+              <div class="shadow-box" style="box-shadow:var(--shadow-1)"><span class="mono">--shadow-1<br>การ์ดยกเล็กน้อย</span></div>
+              <div class="shadow-box" style="box-shadow:var(--shadow-2)"><span class="mono">--shadow-2<br>กล่องโต้ตอบ</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <h3>วงแหวนโฟกัส ขนาดปุ่มสัมผัส และการเคลื่อนไหว</h3>
+        <div class="demo">
+          <div>
+            <p class="demo-label">วงแหวนโฟกัส · กด Tab เพื่อลองกับตัวอย่างจริงด้านล่าง</p>
+            <div class="row">
+              <div class="cell"><div class="focus-sample is-focus">ตัวอย่างวงแหวน</div><span class="small mono">3 px · offset 2 px · --color-accent</span></div>
+              <div class="cell"><button type="button" class="btn btn--secondary">ปุ่มลองโฟกัส</button></div>
+              <div class="cell"><a href="#tokens" class="small">ลิงก์ลองโฟกัส</a></div>
+            </div>
+          </div>
+          <div>
+            <p class="demo-label">ขนาดปุ่มสัมผัสขั้นต่ำ 44 × 44 px</p>
+            <div class="row" style="align-items:center">
+              <button type="button" class="btn btn--ghost btn--icon btn--s" aria-label="ปิดตัวอย่าง (ปุ่มไอคอนขนาด 44 × 44 px)"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+              <span class="small muted">S = 44 px · M = 48 px · L = 56 px ปุ่มไอคอนล้วนต้องมีชื่อสำหรับโปรแกรมอ่านหน้าจอเสมอ</span>
+            </div>
+          </div>
+          <div>
+            <p class="demo-label">การเคลื่อนไหว</p>
+            <p class="small"><span class="mono">--duration-fast 120ms</span> · <span class="mono">--duration-base 200ms</span> · <span class="mono">--duration-slow 1800ms</span> (บินส่งจดหมาย) · <span class="mono">--ease-standard</span></p>
+            <p class="small muted">เมื่อผู้ใช้เปิด “ลดการเคลื่อนไหว” อนิเมชันจะหยุด และข้อความสถานะอย่าง “กำลังบินไปที่ตู้จดหมาย…” ยังบอกความคืบหน้าครบถ้วน</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. TYPOGRAPHY ================= -->
+  <section class="block" id="typography" aria-labelledby="type-h">
+    <div class="container">
+      <header>
+        <p class="section-no">ส่วนที่ 2</p>
+        <h2 id="type-h">ตัวอักษร</h2>
+        <p class="section-desc">IBM Plex Sans Thai ทุกระดับใช้ line-height สูงพอให้สระและวรรณยุกต์ไม่ชนกัน ข้อความไทยไม่ตัดกลางคำด้วยการจัดบรรทัดเอง</p>
+      </header>
+      <div class="demo">
+        <div class="type-row">
+          <p class="type-spec"><b>H1</b> · 32 px · น้ำหนัก 700 · line-height 44 px</p>
+          <p style="font-size:var(--font-size-h1);line-height:var(--line-height-h1);font-weight:var(--font-weight-bold)">พิมพ์มา เดี๋ยวพับเก็บให้</p>
+        </div>
+        <div class="type-row">
+          <p class="type-spec"><b>H2</b> · 24 px · น้ำหนัก 600 · line-height 34 px</p>
+          <p style="font-size:var(--font-size-h2);line-height:var(--line-height-h2);font-weight:var(--font-weight-semibold)">ตู้จดหมายของวันนี้</p>
+        </div>
+        <div class="type-row">
+          <p class="type-spec"><b>H3</b> · 20 px · น้ำหนัก 600 · line-height 30 px</p>
+          <p style="font-size:var(--font-size-h3);line-height:var(--line-height-h3);font-weight:var(--font-weight-semibold)">จดหมายใหม่ 3 ฉบับ</p>
+        </div>
+        <div class="type-row">
+          <p class="type-spec"><b>เนื้อความ</b> · 16 px · น้ำหนัก 400 · line-height 28 px</p>
+          <p>พับจะอ่านข้อความของคุณ พับเป็นซองจดหมาย แล้วบินไปส่งที่ตู้ที่ใช่ โดยไม่ต้องจัดหมวดเอง ชั่วโมง สุขภาพ ปู่ ผู้ ฟุ่มเฟือย</p>
+        </div>
+        <div class="type-row">
+          <p class="type-spec"><b>ข้อความเล็ก</b> · 14 px · น้ำหนัก 400 · line-height 24 px</p>
+          <p class="small">ส่งเมื่อ 09:41 น. · ตู้จดหมาย “งาน” · แก้ไขได้ภายใน 5 นาที</p>
+        </div>
+        <div class="type-row">
+          <p class="type-spec"><b>น้ำหนักที่ใช้</b> · 400 ปกติ · 500 เน้นเบา · 600 หัวข้อและปุ่ม · 700 ชื่อแบรนด์และ H1</p>
+          <p><span style="font-weight:400">ปกติ</span> · <span style="font-weight:500">เน้นเบา</span> · <span style="font-weight:600">หัวข้อ</span> · <span style="font-weight:700">PubFold</span></p>
+        </div>
+      </div>
+      <div class="guide">
+        <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>ใช้ H1 ครั้งเดียวต่อหน้า และเลือกระดับตามลำดับความสำคัญ <span class="guide__eg">เช่น “ตู้จดหมายของวันนี้” เป็น H2 และ “จดหมายใหม่ 3 ฉบับ” เป็น H3</span></p></div>
+        <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้ขนาดเล็กกว่า 14 px กับข้อความที่ผู้ใช้ต้องอ่านเพื่อตัดสินใจ <span class="guide__eg">เช่น เวลานัดหมายในจดหมายต้องไม่เล็กกว่า 14 px</span></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. COMPONENTS ================= -->
+  <section class="block" id="components" aria-labelledby="comp-h">
+    <div class="container">
+      <header>
+        <p class="section-no">ส่วนที่ 3</p>
+        <h2 id="comp-h">คอมโพเนนต์หลัก</h2>
+        <p class="section-desc">ทุกคอมโพเนนต์รองรับแป้นพิมพ์ มีพื้นที่แตะอย่างน้อย 44 × 44 px และบอกสถานะด้วยข้อความหรือไอคอนควบคู่กับสี</p>
+      </header>
+
+      <!-- Buttons -->
+      <div class="comp" id="c-buttons">
+        <h3>ปุ่ม</h3>
+        <p class="comp__desc">สี่แบบ สามขนาด และห้าสถานะ แถวตัวอย่างสถานะ “โฮเวอร์” และ “โฟกัส” จำลองไว้ให้ดูโดยไม่ต้องใช้เมาส์</p>
+        <div class="demo">
+          <div>
+            <p class="demo-label">ขนาด S · M · L (44 · 48 · 56 px)</p>
+            <div class="row">
+              <button type="button" class="btn btn--s">ส่งให้พับ S</button><button type="button" class="btn">ส่งให้พับ M</button><button type="button" class="btn btn--l">ส่งให้พับ L</button>
+            </div>
+            <div class="row" style="margin-top:var(--space-3)">
+              <button type="button" class="btn btn--secondary btn--s">แก้ไข S</button><button type="button" class="btn btn--secondary">แก้ไข M</button><button type="button" class="btn btn--secondary btn--l">แก้ไข L</button>
+            </div>
+            <div class="row" style="margin-top:var(--space-3)">
+              <button type="button" class="btn btn--ghost btn--s">ดูทั้งหมด S</button><button type="button" class="btn btn--ghost">ดูทั้งหมด M</button><button type="button" class="btn btn--ghost btn--l">ดูทั้งหมด L</button>
+            </div>
+            <div class="row" style="margin-top:var(--space-3)">
+              <button type="button" class="btn btn--destructive btn--s">ลบจดหมาย S</button><button type="button" class="btn btn--destructive">ลบจดหมาย M</button><button type="button" class="btn btn--destructive btn--l">ลบจดหมาย L</button>
+            </div>
+          </div>
+
+          <div>
+            <p class="demo-label">สถานะ (ขนาด M): ปกติ · โฮเวอร์ · โฟกัสแป้นพิมพ์ · ปิดใช้งาน · กำลังโหลด</p>
+            <div class="row">
+              <div class="cell"><span class="small">ปกติ</span><button type="button" class="btn">ส่งให้พับ</button></div>
+              <div class="cell"><span class="small">โฮเวอร์</span><button type="button" class="btn is-hover">ส่งให้พับ</button></div>
+              <div class="cell"><span class="small">โฟกัส</span><button type="button" class="btn is-focus">ส่งให้พับ</button></div>
+              <div class="cell"><span class="small">ปิดใช้งาน</span><button type="button" class="btn" disabled>ส่งให้พับ</button></div>
+              <div class="cell"><span class="small">กำลังโหลด</span><button type="button" class="btn" aria-busy="true"><span class="spinner" aria-hidden="true"></span>กำลังส่ง…</button></div>
+            </div>
+            <div class="row" style="margin-top:var(--space-4)">
+              <div class="cell"><button type="button" class="btn btn--secondary">แก้ไข</button></div>
+              <div class="cell"><button type="button" class="btn btn--secondary is-hover">แก้ไข</button></div>
+              <div class="cell"><button type="button" class="btn btn--secondary is-focus">แก้ไข</button></div>
+              <div class="cell"><button type="button" class="btn btn--secondary" disabled>แก้ไข</button></div>
+              <div class="cell"><button type="button" class="btn btn--secondary" aria-busy="true"><span class="spinner" aria-hidden="true"></span>กำลังบันทึก…</button></div>
+            </div>
+            <div class="row" style="margin-top:var(--space-4)">
+              <div class="cell"><button type="button" class="btn btn--ghost">ดูทั้งหมด</button></div>
+              <div class="cell"><button type="button" class="btn btn--ghost is-hover">ดูทั้งหมด</button></div>
+              <div class="cell"><button type="button" class="btn btn--ghost is-focus">ดูทั้งหมด</button></div>
+              <div class="cell"><button type="button" class="btn btn--ghost" disabled>ดูทั้งหมด</button></div>
+              <div class="cell"><button type="button" class="btn btn--ghost" aria-busy="true"><span class="spinner" aria-hidden="true"></span>กำลังโหลด…</button></div>
+            </div>
+            <div class="row" style="margin-top:var(--space-4)">
+              <div class="cell"><button type="button" class="btn btn--destructive">ลบจดหมาย</button></div>
+              <div class="cell"><button type="button" class="btn btn--destructive is-hover">ลบจดหมาย</button></div>
+              <div class="cell"><button type="button" class="btn btn--destructive is-focus">ลบจดหมาย</button></div>
+              <div class="cell"><button type="button" class="btn btn--destructive" disabled>ลบจดหมาย</button></div>
+              <div class="cell"><button type="button" class="btn btn--destructive" aria-busy="true"><span class="spinner" aria-hidden="true"></span>กำลังลบ…</button></div>
+            </div>
+          </div>
+
+          <div>
+            <p class="demo-label">ลองกดดู: ปุ่มที่เปลี่ยนเป็นสถานะกำลังโหลดจริง</p>
+            <div class="row" style="align-items:center">
+              <button type="button" class="btn" id="demo-loading">ส่งให้พับ</button>
+              <p class="small muted" id="demo-loading-status" role="status">พร้อมส่ง</p>
+            </div>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>Primary สำหรับการกระทำหลักเดียวในหน้า, Secondary สำหรับทางเลือกรอง, Ghost สำหรับการกระทำเบา ๆ, Destructive เฉพาะการลบถาวรและต้องมีป้ายบอกชัด <span class="guide__eg">เช่น Primary “ส่งให้พับ” ในแชท และ Destructive “ลบตู้จดหมาย”</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่วาง Primary สองปุ่มใกล้กัน และไม่ใช้ Destructive กับการกระทำที่ย้อนกลับได้ <span class="guide__eg">เช่น “เลิกทำ” หลังพับส่งจดหมาย ให้ใช้ Ghost แทน</span></p></div>
+        </div>
+      </div>
+
+      <!-- Inputs -->
+      <div class="comp" id="c-inputs">
+        <h3>ช่องกรอกข้อความ</h3>
+        <p class="comp__desc">มีป้ายกำกับเสมอ ข้อความช่วยเหลืออยู่ใต้ช่อง และข้อผิดพลาดต้องมีไอคอนกับข้อความภาษาไทย</p>
+        <div class="demo">
+          <div class="field">
+            <label class="field__label" for="f-name">ชื่อตู้จดหมาย</label>
+            <input class="input" id="f-name" type="text" placeholder="เช่น งานประจำ" aria-describedby="f-name-help" autocomplete="off">
+            <p class="field__help" id="f-name-help">ตั้งชื่อสั้น ๆ ไม่เกิน 20 ตัวอักษร</p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-name-err">ชื่อตู้จดหมาย (มีข้อผิดพลาด)</label>
+            <input class="input" id="f-name-err" type="text" value="งาน" aria-invalid="true" aria-describedby="f-name-err-msg" autocomplete="off">
+            <p class="field__error" id="f-name-err-msg"><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg><span>ข้อผิดพลาด: ชื่อ “งาน” ถูกใช้แล้ว กรุณาตั้งชื่ออื่น</span></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-name-dis">ชื่อตู้จดหมาย (ปิดใช้งาน)</label>
+            <input class="input" id="f-name-dis" type="text" value="ไอเดีย" disabled>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>ใช้กับข้อมูลสั้น ๆ ที่ผู้ใช้ต้องตั้งเอง <span class="guide__eg">เช่น ตั้งชื่อตู้จดหมายใหม่ว่า “งานประจำ”</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้แทนช่องแชทที่ส่งข้อความให้พับ และไม่ใช้ placeholder แทนป้ายกำกับ <span class="guide__eg">เช่น ข้อความ “พรุ่งนี้ประชุม 10 โมง” ให้พิมพ์ในช่องแชท</span></p></div>
+        </div>
+      </div>
+
+      <!-- Select -->
+      <div class="comp" id="c-select">
+        <h3>ตัวเลือกแบบเลื่อนลง</h3>
+        <div class="demo">
+          <div class="field">
+            <label class="field__label" for="f-box">ย้ายไปตู้จดหมาย</label>
+            <div class="select-wrap">
+              <select class="input" id="f-box" aria-describedby="f-box-help">
+                <option>งาน</option><option>การเงิน</option><option>สุขภาพ</option><option>ไอเดีย</option>
+              </select>
+              <svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>
+            </div>
+            <p class="field__help" id="f-box-help">พับจัดหมวดให้แล้ว แต่คุณเปลี่ยนได้</p>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>เมื่อมีตัวเลือกตายตัวตั้งแต่ 4 รายการขึ้นไป <span class="guide__eg">เช่น เลือกตู้ปลายทางตอนกด “แก้ไข” ในการ์ดยืนยัน</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้เมื่อมี 2–3 ตัวเลือก และไม่ใช้เมื่อผู้ใช้ต้องพิมพ์ค่าใหม่ <span class="guide__eg">เช่น สร้างตู้จดหมายใหม่ ให้ใช้ช่องกรอกข้อความ</span></p></div>
+        </div>
+      </div>
+
+      <!-- Checkbox -->
+      <div class="comp" id="c-checkbox">
+        <h3>ช่องทำเครื่องหมาย</h3>
+        <div class="demo">
+          <fieldset style="border:0;margin:0;padding:0;min-width:0">
+            <legend class="field__label" style="padding:0;margin-bottom:var(--space-2)">การแจ้งเตือนของตู้ “งาน”</legend>
+            <label class="check"><input class="check__input" type="checkbox"><span class="check__text">เตือนก่อนถึงกำหนด 1 ชั่วโมง</span></label>
+            <label class="check"><input class="check__input" type="checkbox" checked><span class="check__text">สรุปจดหมายใหม่ทุกเช้า</span></label>
+            <label class="check"><input class="check__input" type="checkbox" disabled><span class="check__text">แจ้งเตือนจากพับ (ปิดโดยผู้ดูแล)</span></label>
+          </fieldset>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>เลือกหลายข้อได้อิสระ หรือกดยืนยันภายหลัง <span class="guide__eg">เช่น เลือกการแจ้งเตือนของตู้ “งาน” แล้วกดบันทึก</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้กับการกระทำที่ต้องมีผลทันทีหรือเลือกได้ข้อเดียว <span class="guide__eg">เช่น เลือกตู้ปลายทางของจดหมายหนึ่งฉบับ</span></p></div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="comp" id="c-badges">
+        <h3>ป้ายสถานะ</h3>
+        <p class="comp__desc">ทุกป้ายมีไอคอนรูปทรงต่างกันและข้อความไทย ผู้ที่แยกสีไม่ได้ก็อ่านสถานะได้เหมือนกัน</p>
+        <div class="demo">
+          <div class="row">
+            <span class="badge badge--success"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>สำเร็จ: ส่งถึงตู้แล้ว</span>
+            <span class="badge badge--warning"><svg class="icon" aria-hidden="true"><use href="#i-warn"/></svg>คำเตือน: รอยืนยันหมวด</span>
+            <span class="badge badge--error"><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ผิดพลาด: ส่งไม่สำเร็จ</span>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>แสดงสถานะของสิ่งที่มีอยู่แล้ว <span class="guide__eg">เช่น ติดป้าย “สำเร็จ: ส่งถึงตู้แล้ว” บนจดหมายในตาราง</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้เป็นปุ่มกด และไม่สื่อสถานะด้วยสีอย่างเดียว <span class="guide__eg">เช่น อย่าทาสีเขียวลงบนจดหมายโดยไม่มีคำว่า “สำเร็จ”</span></p></div>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div class="comp" id="c-cards">
+        <h3>การ์ด</h3>
+        <div class="demo">
+          <div class="cards">
+            <article class="card card--paper">
+              <p class="card__meta">การ์ดกระดาษ · ตู้ “งาน”</p>
+              <h4>ประชุมทีมออกแบบ</h4>
+              <p class="small">พรุ่งนี้ 10:00 น. ห้องประชุมชั้น 3</p>
+            </article>
+            <article class="card">
+              <div class="card__head"><p class="card__meta">การ์ดยก · ตู้ “การเงิน”</p><span class="badge badge--warning"><svg class="icon" aria-hidden="true"><use href="#i-warn"/></svg>ใกล้ครบกำหนด</span></div>
+              <h4>จ่ายค่าไฟ</h4>
+              <p class="small">ครบกำหนด 10 พ.ย. 2569</p>
+            </article>
+            <button type="button" class="card card--interactive">
+              <span class="card__meta">การ์ดกดได้ · ตู้ “ไอเดีย”</span>
+              <span style="font-weight:var(--font-weight-semibold)">ไอเดียของขวัญวันเกิดแม่</span>
+              <span class="small muted">แตะเพื่อเปิดจดหมาย</span>
+            </button>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>รวมข้อมูลของสิ่งเดียวไว้ด้วยกัน <span class="guide__eg">เช่น จดหมายหนึ่งฉบับมีชื่อเรื่อง เวลา และสถานะ</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ซ้อนการ์ดในการ์ด และไม่ทำการ์ดกดได้ที่มีปุ่มซ้อนข้างใน <span class="guide__eg">เช่น ไม่ใส่ปุ่ม “ลบ” ไว้ในการ์ดที่แตะเพื่อเปิดอยู่แล้ว</span></p></div>
+        </div>
+      </div>
+
+      <!-- Modal -->
+      <div class="comp" id="c-modal">
+        <h3>กล่องโต้ตอบ (Modal)</h3>
+        <p class="comp__desc">ย้ายโฟกัสเข้ากล่องเมื่อเปิด กด Esc หรือคลิกพื้นหลังเพื่อปิด และคืนโฟกัสให้ปุ่มที่เปิด</p>
+        <div class="demo">
+          <div class="row" style="align-items:center">
+            <button type="button" class="btn btn--destructive" id="open-modal">ลบตู้จดหมาย “ไอเดีย”</button>
+            <p class="small muted" id="modal-result" role="status">ยังไม่ได้เปิดกล่องโต้ตอบ</p>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>เมื่อต้องยืนยันการกระทำที่ย้อนกลับไม่ได้ <span class="guide__eg">เช่น ยืนยันลบตู้จดหมายที่ยังมีจดหมายอยู่ 7 ฉบับ</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้แจ้งผลสำเร็จหรือขัดจังหวะการแชท <span class="guide__eg">เช่น “พับส่งถึงตู้แล้ว” ให้แสดงเป็นการ์ดยืนยันในแชท</span></p></div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="comp" id="c-table">
+        <h3>ตาราง</h3>
+        <p class="comp__desc">บนจอเล็กตารางเลื่อนซ้ายขวาภายในกรอบ คอลัมน์แรกตรึงไว้ และกรอบเลื่อนโฟกัสด้วยแป้นพิมพ์ได้ (ลูกศรซ้าย/ขวา)</p>
+        <div class="demo">
+          <div class="table-wrap" role="region" aria-labelledby="tbl-cap" tabindex="0">
+            <table class="table">
+              <caption id="tbl-cap">สรุปตู้จดหมายสัปดาห์นี้ (อัปเดต 6 พ.ย. 2569)</caption>
+              <thead><tr><th scope="col">ตู้จดหมาย</th><th scope="col" class="num">ใหม่</th><th scope="col" class="num">เสร็จแล้ว</th><th scope="col">อัปเดตล่าสุด</th><th scope="col">สถานะ</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">งาน</th><td class="num">5</td><td class="num">3</td><td>09:41 น.</td><td><span class="badge badge--success"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>สำเร็จ</span></td></tr>
+                <tr><th scope="row">การเงิน</th><td class="num">2</td><td class="num">0</td><td>08:15 น.</td><td><span class="badge badge--warning"><svg class="icon" aria-hidden="true"><use href="#i-warn"/></svg>ใกล้กำหนด</span></td></tr>
+                <tr><th scope="row">สุขภาพ</th><td class="num">1</td><td class="num">1</td><td>เมื่อวาน</td><td><span class="badge badge--success"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>สำเร็จ</span></td></tr>
+                <tr><th scope="row">ไอเดีย</th><td class="num">7</td><td class="num">0</td><td>3 พ.ย.</td><td><span class="badge badge--error"><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ซิงก์ไม่สำเร็จ</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>เปรียบเทียบข้อมูลหลายคอลัมน์ที่มีหัวคอลัมน์ชัดเจน <span class="guide__eg">เช่น สรุปจำนวนจดหมายใหม่และเสร็จแล้วของแต่ละตู้</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้จัดเลย์เอาต์ และไม่ใช้กับรายการที่มีแค่ 1–2 คอลัมน์ <span class="guide__eg">เช่น รายการจดหมายในตู้เดียว ให้ใช้การ์ด</span></p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. PATTERNS ================= -->
+  <section class="block" id="patterns" aria-labelledby="pat-h">
+    <div class="container">
+      <header>
+        <p class="section-no">ส่วนที่ 4</p>
+        <h2 id="pat-h">แพตเทิร์น PubFold</h2>
+        <p class="section-desc">ตัวอย่างใช้งานได้จริง ลองพิมพ์ข้อความในช่องแชท แล้วดูพับพับจดหมายส่งไปยังตู้จดหมาย</p>
+      </header>
+
+      <!-- Composer -->
+      <div class="comp" id="p-composer">
+        <h3>ช่องแชท (Chat composer)</h3>
+        <div class="demo" style="justify-items:stretch">
+          <div class="phone">
+            <div class="thread" id="thread" role="log" aria-live="polite" aria-label="บทสนทนากับพับ" tabindex="0">
+              <div class="msg"><svg class="msg__avatar" aria-hidden="true"><use href="#pub-bird"/></svg><div class="bubble bubble--bird">พิมพ์มา เดี๋ยวพับเก็บให้</div></div>
+            </div>
+            <form class="composer" id="composer" autocomplete="off">
+              <div class="composer__samples" role="group" aria-label="ตัวอย่างข้อความ">
+                <button type="button" class="btn btn--secondary btn--s" data-sample="พรุ่งนี้ประชุมทีม 10 โมง">ประชุมทีม</button>
+                <button type="button" class="btn btn--secondary btn--s" data-sample="จ่ายค่าไฟก่อนวันที่ 10">จ่ายค่าไฟ</button>
+                <button type="button" class="btn btn--secondary btn--s" data-sample="นัดหมอฟันวันศุกร์">นัดหมอ</button>
+                <button type="button" class="btn btn--secondary btn--s" data-sample="ไอเดียของขวัญวันเกิดแม่">ไอเดีย</button>
+              </div>
+              <div class="composer__row">
+                <label class="visually-hidden" for="composer-input">ข้อความถึงพับ</label>
+                <textarea class="input" id="composer-input" rows="1" placeholder="พิมพ์มา เดี๋ยวพับเก็บให้"></textarea>
+                <button type="submit" class="btn btn--icon" id="composer-send" aria-label="ส่งข้อความให้พับ" disabled><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg></button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>เป็นทางเข้าเดียวของการจดบันทึก ให้พิมพ์อิสระแล้วพับจัดหมวดให้ <span class="guide__eg">เช่น พิมพ์ “จ่ายค่าไฟก่อนวันที่ 10” โดยไม่ต้องเลือกตู้ก่อน</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่บังคับกรอกหมวด วันที่ หรือแท็กก่อนกดส่ง <span class="guide__eg">เช่น ไม่เปิดฟอร์มหลายช่องแทนช่องแชท</span></p></div>
+        </div>
+      </div>
+
+      <!-- Delivery -->
+      <div class="comp" id="p-delivery">
+        <h3>การ์ดยืนยันการส่งของพับ</h3>
+        <p class="comp__desc">สถานะบอกเป็นข้อความทุกขั้น: กำลังพับ → กำลังบิน → ส่งถึงแล้ว อนิเมชันเป็นเพียงส่วนเสริม</p>
+        <div class="demo" style="justify-items:stretch">
+          <div class="phone" style="background:var(--color-cream);padding:var(--space-4)">
+            <div class="delivery is-done" id="delivery-static" data-cat="งาน">
+              <div class="delivery__track" aria-hidden="true">
+                <svg class="delivery__bird"><use href="#pub-bird"/></svg>
+                <span class="delivery__line"></span>
+                <svg class="delivery__env"><use href="#pub-envelope"/></svg>
+                <span class="delivery__box"><svg class="icon"><use href="#i-mailbox"/></svg></span>
+              </div>
+              <p class="delivery__title" aria-live="polite"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg><span class="delivery__phase">พับส่งจดหมายถึงตู้ “งาน” แล้ว</span></p>
+              <p class="delivery__quote">“พรุ่งนี้ประชุมทีม 10 โมง”</p>
+              <div class="delivery__actions" role="group" aria-label="การกระทำกับจดหมายที่ส่งแล้ว">
+                <button type="button" class="btn btn--s" data-action="open">เปิดงาน</button>
+                <button type="button" class="btn btn--secondary btn--s" data-action="edit">แก้ไข</button>
+                <button type="button" class="btn btn--ghost btn--s" data-action="undo">เลิกทำ</button>
+              </div>
+              <p class="delivery__status" role="status"></p>
+            </div>
+          </div>
+          <div class="row"><button type="button" class="btn btn--secondary btn--s" id="replay-delivery">เล่นการส่งอีกครั้ง</button></div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>ทันทีหลังพับส่งจดหมายสำเร็จ เพื่อให้เปิด แก้ หรือเลิกทำได้ในที่เดียว <span class="guide__eg">เช่น “พับส่งจดหมายถึงตู้ ‘งาน’ แล้ว” พร้อม เปิดงาน · แก้ไข · เลิกทำ</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้เมื่อพับยังไม่แน่ใจว่าเป็นหมวดไหน และไม่ใช้เป็นการแจ้งเตือนระบบ <span class="guide__eg">เช่น ถ้าข้อความกำกวม ให้พับถามกลับในแชทก่อน</span></p></div>
+        </div>
+      </div>
+
+      <!-- Mailboxes -->
+      <div class="comp" id="p-mailboxes">
+        <h3>การ์ดตู้จดหมาย</h3>
+        <p class="comp__desc">ตู้ปลายทางไฮไลต์ด้วยพื้น secondary ขอบหนา และป้าย “ปลายทาง” ลองแตะหรือส่งข้อความจากช่องแชทด้านบน</p>
+        <div class="demo">
+          <div class="mailboxes" id="mailboxes">
+            <button type="button" class="mailbox" data-cat="งาน" aria-pressed="false"><span class="mailbox__icon"><svg class="icon" aria-hidden="true"><use href="#i-briefcase"/></svg></span><span class="mailbox__name">งาน</span><span class="mailbox__count">5 ฉบับ</span><span class="mailbox__tag"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ปลายทาง</span></button>
+            <button type="button" class="mailbox" data-cat="การเงิน" aria-pressed="false"><span class="mailbox__icon"><svg class="icon" aria-hidden="true"><use href="#i-coin"/></svg></span><span class="mailbox__name">การเงิน</span><span class="mailbox__count">2 ฉบับ</span><span class="mailbox__tag"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ปลายทาง</span></button>
+            <button type="button" class="mailbox" data-cat="สุขภาพ" aria-pressed="false"><span class="mailbox__icon"><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg></span><span class="mailbox__name">สุขภาพ</span><span class="mailbox__count">1 ฉบับ</span><span class="mailbox__tag"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ปลายทาง</span></button>
+            <button type="button" class="mailbox" data-cat="ไอเดีย" aria-pressed="false"><span class="mailbox__icon"><svg class="icon" aria-hidden="true"><use href="#i-bulb"/></svg></span><span class="mailbox__name">ไอเดีย</span><span class="mailbox__count">7 ฉบับ</span><span class="mailbox__tag"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ปลายทาง</span></button>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>เป็นภาพรวมของแต่ละหมวดในหน้า “ตู้จดหมาย” <span class="guide__eg">เช่น “งาน · 5 ฉบับ” แตะเพื่อเข้าไปดูจดหมาย</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่ใช้แสดงเนื้อหาจดหมายแบบละเอียดหรือรายการยาว <span class="guide__eg">เช่น ไม่ใส่ข้อความเต็มของจดหมายทั้ง 5 ฉบับลงบนการ์ดตู้</span></p></div>
+        </div>
+      </div>
+
+      <!-- Bottom nav -->
+      <div class="comp" id="p-nav">
+        <h3>แถบนำทางด้านล่าง</h3>
+        <div class="demo" style="justify-items:stretch">
+          <div class="phone">
+            <div class="tabbar-status" id="tab-status" role="status">กำลังอยู่ที่หน้า “แชท”</div>
+            <nav aria-label="เมนูหลัก">
+              <ul class="tabbar" id="tabbar">
+                <li style="display:contents"><button type="button" class="tab" aria-current="page" data-tab="แชท"><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg>แชท</button></li>
+                <li style="display:contents"><button type="button" class="tab" data-tab="วันนี้"><svg class="icon" aria-hidden="true"><use href="#i-today"/></svg>วันนี้</button></li>
+                <li style="display:contents"><button type="button" class="tab" data-tab="ปฏิทิน"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>ปฏิทิน</button></li>
+                <li style="display:contents"><button type="button" class="tab" data-tab="ตู้จดหมาย"><svg class="icon" aria-hidden="true"><use href="#i-mailbox"/></svg>ตู้จดหมาย</button></li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>สำหรับปลายทางหลัก 4 แห่งที่ผู้ใช้สลับบ่อย: แชท · วันนี้ · ปฏิทิน · ตู้จดหมาย <span class="guide__eg">เช่น กลับจากตู้จดหมายมาแชทต่อด้วยการแตะ “แชท” หนึ่งครั้ง</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่เพิ่มเป็นแท็บที่ 5 และไม่ใส่การกระทำอย่าง “เพิ่มจดหมาย” <span class="guide__eg">เช่น หน้า My Life Board เข้าได้จากหน้า “วันนี้” ไม่ต้องเพิ่มแท็บ</span></p></div>
+        </div>
+      </div>
+
+      <!-- Life Board -->
+      <div class="comp" id="p-lifeboard">
+        <h3>ตัวอย่าง My Life Board</h3>
+        <p class="comp__desc">การ์ดสรุป 4 หมวด การ์ด “บันทึกประจำวัน” แสดงเฉพาะคำชวนเขียน ไม่เผยเนื้อหาที่บันทึกไว้</p>
+        <div class="demo">
+          <div class="lifeboard">
+            <button type="button" class="lb-card"><span class="lb-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></span><span class="lb-card__title">ดูดวง</span><span class="lb-card__preview">ดวงประจำวันพร้อมให้เปิดอ่าน</span></button>
+            <button type="button" class="lb-card"><span class="lb-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg></span><span class="lb-card__title">วันสำคัญ</span><span class="lb-card__preview">วันเกิดแม่ · อีก 12 วัน</span></button>
+            <button type="button" class="lb-card"><span class="lb-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg></span><span class="lb-card__title">บันทึกสุขภาพ</span><span class="lb-card__preview">ดื่มน้ำ 5 จาก 8 แก้ว</span></button>
+            <button type="button" class="lb-card lb-card--paper"><span class="lb-card__icon"><svg class="icon" aria-hidden="true"><use href="#i-pen"/></svg></span><span class="lb-card__title">บันทึกประจำวัน</span><span class="lb-card__preview">วันนี้อยากเล่าอะไรให้พับฟัง?</span></button>
+          </div>
+        </div>
+        <div class="guide">
+          <div class="guide__col guide__col--do"><h4><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ใช้เมื่อไหร่</h4><p>เป็นภาพรวมเร็ว ๆ ของชีวิตประจำวันในหน้าเดียว <span class="guide__eg">เช่น เห็น “วันเกิดแม่ · อีก 12 วัน” โดยไม่ต้องเปิดปฏิทิน</span></p></div>
+          <div class="guide__col guide__col--dont"><h4><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ควรใช้เมื่อไหร่</h4><p>ไม่แสดงเนื้อหาส่วนตัวบนตัวอย่างการ์ด โดยเฉพาะบันทึกประจำวัน <span class="guide__eg">เช่น ใช้ “วันนี้อยากเล่าอะไรให้พับฟัง?” แทนข้อความที่เขียนไว้</span></p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5. EXPORT ================= -->
+  <section class="block" id="export" aria-labelledby="export-h">
+    <div class="container">
+      <header>
+        <p class="section-no">ส่วนที่ 5</p>
+        <h2 id="export-h">ส่งออก tokens</h2>
+        <p class="section-desc">คัดลอกประกาศ <code>:root</code> จริงจากหน้านี้ไปวางเป็นไฟล์ <code>tokens.css</code></p>
+      </header>
+      <div class="demo">
+        <div class="row" style="align-items:center">
+          <button type="button" class="btn" id="copy-tokens"><svg class="icon icon--s" aria-hidden="true"><use href="#i-copy"/></svg><span id="copy-tokens-label">คัดลอก tokens.css</span></button>
+          <button type="button" class="btn btn--ghost" id="toggle-tokens" aria-expanded="false" aria-controls="export-fallback">แสดงโค้ด</button>
+        </div>
+        <p class="small muted" id="copy-tokens-status" role="status"></p>
+        <div id="export-fallback" hidden>
+          <div class="notice" id="export-notice" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#i-warn"/></svg>
+            <p class="small">เบราว์เซอร์ไม่อนุญาตให้คัดลอกอัตโนมัติเมื่อเปิดไฟล์จากเครื่อง โค้ดด้านล่างถูกเลือกไว้ให้แล้ว กด <b>Ctrl + C</b> (Mac: <b>⌘ + C</b>) หรือกดค้างบนมือถือแล้วเลือก “คัดลอก” จากนั้นวางลงไฟล์ <code>tokens.css</code></p>
+          </div>
+          <div class="field" style="margin-top:var(--space-3)">
+            <label class="field__label" for="tokens-text">โค้ด tokens.css</label>
+            <textarea class="input code-box" id="tokens-text" readonly spellcheck="false" wrap="off"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container" style="display:flex;gap:var(--space-3);align-items:center">
+    <svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg>
+    <p class="small">PubFold Design System · เวอร์ชัน 1.0 · อัปเดต 6 พ.ย. 2569</p>
+  </div>
+</footer>
+
+<!-- Modal -->
+<dialog id="demo-dialog" aria-labelledby="dlg-title" aria-describedby="dlg-desc">
+  <form method="dialog">
+    <div class="dialog__head">
+      <h3 id="dlg-title">ลบตู้จดหมาย “ไอเดีย” ใช่ไหม?</h3>
+      <button type="submit" value="cancel" class="btn btn--ghost btn--icon btn--s" aria-label="ปิดหน้าต่าง"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="dialog__body"><p id="dlg-desc">จดหมาย 7 ฉบับในตู้นี้จะถูกลบถาวรและกู้คืนไม่ได้ (ตัวอย่างนี้ไม่ลบข้อมูลจริง)</p></div>
+    <div class="dialog__foot">
+      <button type="submit" value="cancel" class="btn btn--secondary" id="modal-cancel">ยกเลิก</button>
+      <button type="submit" value="delete" class="btn btn--destructive">ลบตู้จดหมาย</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Templates -->
+<template id="tpl-delivery">
+  <div class="delivery" data-cat="">
+    <div class="delivery__track" aria-hidden="true">
+      <svg class="delivery__bird"><use href="#pub-bird"/></svg>
+      <span class="delivery__line"></span>
+      <svg class="delivery__env"><use href="#pub-envelope"/></svg>
+      <span class="delivery__box"><svg class="icon"><use href="#i-mailbox"/></svg></span>
+    </div>
+    <p class="delivery__title" aria-live="polite"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg><span class="delivery__phase"></span></p>
+    <p class="delivery__quote"></p>
+    <div class="delivery__actions" role="group" aria-label="การกระทำกับจดหมายที่ส่งแล้ว" hidden>
+      <button type="button" class="btn btn--s" data-action="open">เปิดงาน</button>
+      <button type="button" class="btn btn--secondary btn--s" data-action="edit">แก้ไข</button>
+      <button type="button" class="btn btn--ghost btn--s" data-action="undo">เลิกทำ</button>
+    </div>
+    <p class="delivery__status" role="status"></p>
+  </div>
+</template>
+
+<div class="toast" id="toast" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg><span id="toast-text"></span></div>
+<div class="visually-hidden" id="live" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ---------- feedback: visible toast + screen-reader live region ---------- */
+  var toastEl = $('#toast'), toastText = $('#toast-text'), live = $('#live'), toastTimer;
+  function announce(msg, ms) {
+    toastText.textContent = msg;
+    toastEl.classList.add('is-visible');
+    live.textContent = '';
+    setTimeout(function () { live.textContent = msg; }, 50);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('is-visible'); }, ms || 3000);
+  }
+
+  /* ---------- clipboard (works from file:// via fallbacks) ---------- */
+  function legacyCopy(text) {
+    var prev = document.activeElement, ok = false;
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+    document.body.appendChild(ta);
+    try { ta.select(); ta.setSelectionRange(0, text.length); ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    if (prev && prev.focus) prev.focus({ preventScroll: true });
+    return ok;
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      /* some browsers leave the promise pending on file:// (permission prompt), so race it against a timeout */
+      return new Promise(function (resolve) {
+        var done = false;
+        function finish(ok) { if (!done) { done = true; resolve(ok); } }
+        var t = setTimeout(function () { finish(legacyCopy(text)); }, 1200);
+        navigator.clipboard.writeText(text).then(
+          function () { clearTimeout(t); finish(true); },
+          function () { clearTimeout(t); finish(legacyCopy(text)); }
+        );
+      });
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+
+  /* ---------- colour swatches ---------- */
+  $$('[data-copy-token]').forEach(function (btn) {
+    var label = $('.btn__label', btn);
+    btn.addEventListener('click', function () {
+      var token = btn.dataset.copyToken, value = btn.dataset.copyValue;
+      var hexEl = $('.swatch__hex', btn.closest('.swatch'));
+      copyText(token + ': ' + value + ';').then(function (ok) {
+        if (ok) {
+          label.textContent = 'คัดลอกแล้ว';
+          setTimeout(function () { label.textContent = 'คัดลอก'; }, 2000);
+          announce('คัดลอก ' + token + ' แล้ว', 2500);
+        } else {
+          var sel = window.getSelection(), range = document.createRange();
+          range.selectNodeContents(hexEl); sel.removeAllRanges(); sel.addRange(range);
+          announce('คัดลอกอัตโนมัติไม่ได้ เลือกรหัสสี ' + value + ' ไว้แล้ว กด Ctrl + C เพื่อคัดลอก', 6000);
+        }
+      });
+    });
+  });
+
+  /* ---------- contrast table (computed from live tokens) ---------- */
+  (function () {
+    var cs = getComputedStyle(document.documentElement);
+    var tok = function (n) { return cs.getPropertyValue(n).trim(); };
+    function lum(hex) {
+      var h = hex.replace('#', ''), c = [0, 2, 4].map(function (i) {
+        var v = parseInt(h.substr(i, 2), 16) / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    }
+    function ratio(a, b) { var l1 = lum(a), l2 = lum(b); return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05); }
+    var rows = [
+      ['--color-text', '--color-background', 'ข้อความหลักบนพื้นขาว', 4.5, ''],
+      ['--color-text-muted', '--color-background', 'ข้อความรองบนพื้นขาว', 4.5, ''],
+      ['--color-text-muted', '--color-cream', 'ข้อความรองบนการ์ดกระดาษ', 4.5, ''],
+      ['--color-surface', '--color-primary', 'ข้อความขาวบนปุ่มหลัก', 4.5, ''],
+      ['--color-primary', '--color-background', 'ลิงก์และปุ่ม Ghost บนพื้นขาว', 4.5, ''],
+      ['--color-text', '--color-secondary', 'ข้อความบนพื้นที่เลือก / ปุ่มรอง', 4.5, ''],
+      ['--color-surface', '--color-accent', 'ข้อความขาวบนปุ่มลบ', 4.5, ''],
+      ['--color-accent', '--color-background', 'ข้อความสีน้ำตาลบนพื้นขาว', 4.5, ''],
+      ['--color-text-muted', '--color-background', 'ขอบช่องกรอกและช่องทำเครื่องหมาย', 3, 'ขอบของตัวควบคุม'],
+      ['--color-border', '--color-background', 'ขอบตกแต่ง --color-border', 3, 'ใช้ตกแต่งเท่านั้น ห้ามเป็นขอบตัวควบคุม'],
+      ['--color-primary', '--color-cream', 'ข้อความสี primary บนการ์ดกระดาษ', 4.5, 'ใช้กับไอคอนเท่านั้น'],
+      ['--color-primary', '--color-secondary', 'ข้อความสี primary บนพื้น secondary', 4.5, 'ใช้กับไอคอนเท่านั้น']
+    ];
+    var body = $('#contrast-table tbody');
+    rows.forEach(function (r) {
+      var fg = tok(r[0]), bg = tok(r[1]), v = ratio(fg, bg), pass = v >= r[3];
+      var tr = document.createElement('tr');
+      var label = r[2] + (r[4] ? ' (' + r[4] + ')' : '');
+      tr.innerHTML =
+        '<th scope="row"><span class="contrast-sample" style="color:' + fg + ';background:' + bg + '" aria-hidden="true">Aa</span> <span class="visually-hidden">' + r[0] + ' บน ' + r[1] + '</span></th>' +
+        '<td></td><td class="num"></td><td></td>';
+      tr.children[1].textContent = label;
+      tr.children[2].textContent = v.toFixed(2) + ' : 1';
+      tr.children[3].innerHTML = pass
+        ? '<span class="badge badge--success"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>ผ่าน (≥ ' + r[3] + ')</span>'
+        : '<span class="badge badge--error"><svg class="icon" aria-hidden="true"><use href="#i-x-circle"/></svg>ไม่ผ่าน ห้ามใช้แบบนี้</span>';
+      body.appendChild(tr);
+    });
+  })();
+
+  /* ---------- loading button demo ---------- */
+  (function () {
+    var b = $('#demo-loading'), s = $('#demo-loading-status');
+    b.addEventListener('click', function () {
+      b.setAttribute('aria-busy', 'true');
+      b.innerHTML = '<span class="spinner" aria-hidden="true"></span>กำลังส่ง…';
+      s.textContent = 'กำลังส่งให้พับ…';
+      setTimeout(function () {
+        b.removeAttribute('aria-busy');
+        b.textContent = 'ส่งให้พับ';
+        s.textContent = 'ส่งสำเร็จ: พับรับจดหมายแล้ว';
+      }, 1600);
+    });
+  })();
+
+  /* ---------- modal ---------- */
+  (function () {
+    var dlg = $('#demo-dialog'), open = $('#open-modal'), result = $('#modal-result'), trigger = null;
+    open.addEventListener('click', function () {
+      trigger = open;
+      if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+      $('#modal-cancel').focus();
+      result.textContent = 'กล่องโต้ตอบเปิดอยู่';
+    });
+    dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close('cancel'); });
+    dlg.addEventListener('close', function () {
+      result.textContent = dlg.returnValue === 'delete'
+        ? 'ลบตู้จดหมาย “ไอเดีย” แล้ว (ตัวอย่าง ไม่มีข้อมูลถูกลบจริง)'
+        : 'ยกเลิกแล้ว ตู้จดหมาย “ไอเดีย” ยังอยู่เหมือนเดิม';
+      if (trigger) trigger.focus();
+    });
+  })();
+
+  /* ---------- mailboxes ---------- */
+  var boxes = $$('.mailbox');
+  function setDestination(cat) {
+    boxes.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.cat === cat)); });
+  }
+  boxes.forEach(function (b) {
+    b.addEventListener('click', function () {
+      setDestination(b.getAttribute('aria-pressed') === 'true' ? null : b.dataset.cat);
+    });
+  });
+
+  /* ---------- delivery card ---------- */
+  var timers = new WeakMap();
+  function runDelivery(card) {
+    var cat = card.dataset.cat, phase = $('.delivery__phase', card), actions = $('.delivery__actions', card);
+    var status = $('.delivery__status', card), icon = $('.delivery__title .icon use', card);
+    (timers.get(card) || []).forEach(clearTimeout);
+    card.classList.remove('is-done', 'is-flying', 'is-undone');
+    void card.offsetWidth;
+    actions.hidden = true; status.textContent = '';
+    $$('button', actions).forEach(function (b) { b.disabled = false; });
+    icon.setAttribute('href', '#i-warn');
+    phase.textContent = 'พับกำลังพับข้อความเป็นจดหมาย…';
+    var t1 = setTimeout(function () {
+      card.classList.add('is-flying');
+      phase.textContent = 'พับกำลังบินไปที่ตู้จดหมาย “' + cat + '”…';
+    }, 800);
+    var t2 = setTimeout(function () {
+      card.classList.remove('is-flying'); card.classList.add('is-done');
+      icon.setAttribute('href', '#i-check-circle');
+      phase.textContent = 'พับส่งจดหมายถึงตู้ “' + cat + '” แล้ว';
+      actions.hidden = false;
+      setDestination(cat);
+    }, 800 + (reduceMotion.matches ? 600 : 1800));
+    timers.set(card, [t1, t2]);
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var card = btn.closest('.delivery'), cat = card.dataset.cat, status = $('.delivery__status', card);
+    var act = btn.dataset.action;
+    if (act === 'open') status.textContent = 'เปิดงานในตู้ “' + cat + '” แล้ว (ตัวอย่าง)';
+    if (act === 'edit') status.textContent = 'เปิดการแก้ไข: เปลี่ยนข้อความหรือย้ายไปตู้อื่นได้ (ตัวอย่าง)';
+    if (act === 'undo') {
+      $('.delivery__phase', card).textContent = 'เลิกทำแล้ว พับนำจดหมายกลับจากตู้ “' + cat + '”';
+      $('.delivery__title .icon use', card).setAttribute('href', '#i-x-circle');
+      card.classList.remove('is-done'); card.classList.add('is-undone');
+      $$('.delivery__actions button', card).forEach(function (b) { b.disabled = true; });
+      status.textContent = 'ข้อความกลับไปอยู่ในช่องแชทอีกครั้ง';
+      setDestination(null);
+    }
+  });
+  $('#replay-delivery').addEventListener('click', function () { runDelivery($('#delivery-static')); });
+
+  /* ---------- composer ---------- */
+  (function () {
+    var form = $('#composer'), input = $('#composer-input'), send = $('#composer-send'), thread = $('#thread');
+    var map = [
+      ['งาน', /ประชุม|ส่งงาน|รายงาน|ลูกค้า|โปรเจกต์|เดดไลน์/],
+      ['การเงิน', /จ่าย|บิล|ค่าไฟ|ค่าน้ำ|เงิน|โอน|ผ่อน/],
+      ['สุขภาพ', /หมอ|ยา|ออกกำลัง|ตรวจ|นอน|ฟัน/]
+    ];
+    function classify(t) { for (var i = 0; i < map.length; i++) if (map[i][1].test(t)) return map[i][0]; return 'ไอเดีย'; }
+    function sync() { send.disabled = !input.value.trim(); input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 120) + 'px'; }
+    input.addEventListener('input', sync);
+    $$('[data-sample]').forEach(function (b) {
+      b.addEventListener('click', function () { input.value = b.dataset.sample; sync(); input.focus(); });
+    });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var text = input.value.trim();
+      if (!text) { input.focus(); return; }
+      var row = document.createElement('div'); row.className = 'msg msg--user';
+      var bub = document.createElement('div'); bub.className = 'bubble bubble--user'; bub.textContent = text;
+      row.appendChild(bub); thread.appendChild(row);
+      var cat = classify(text);
+      var card = $('#tpl-delivery').content.firstElementChild.cloneNode(true);
+      card.dataset.cat = cat; $('.delivery__quote', card).textContent = '“' + text + '”';
+      var wrap = document.createElement('div'); wrap.className = 'msg'; wrap.appendChild(card); thread.appendChild(wrap);
+      thread.scrollTop = thread.scrollHeight;
+      input.value = ''; sync(); input.focus();
+      runDelivery(card);
+      setTimeout(function () { thread.scrollTop = thread.scrollHeight; }, 2800);
+    });
+    sync();
+  })();
+
+  /* ---------- bottom nav ---------- */
+  (function () {
+    var tabs = $$('.tab'), status = $('#tab-status');
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        tabs.forEach(function (o) { o.removeAttribute('aria-current'); });
+        t.setAttribute('aria-current', 'page');
+        status.textContent = 'กำลังอยู่ที่หน้า “' + t.dataset.tab + '”';
+      });
+    });
+  })();
+
+  /* ---------- tokens.css export ---------- */
+  function buildTokensCss() {
+    var lines = [], prevGroup = null;
+    function push(name, value) {
+      var group = name.split('-')[2];
+      if (prevGroup && group !== prevGroup) lines.push('');
+      prevGroup = group;
+      lines.push('  ' + name + ': ' + value + ';');
+    }
+    try {
+      var rules = $('#ds-styles').sheet.cssRules;
+      for (var i = 0; i < rules.length; i++) {
+        if (rules[i].selectorText === ':root') {
+          var st = rules[i].style;
+          for (var j = 0; j < st.length; j++) if (st[j].indexOf('--') === 0) push(st[j], st.getPropertyValue(st[j]).trim());
+        }
+      }
+    } catch (err) { lines = []; }
+    if (!lines.length) {
+      var m = /:root\s*\{([\s\S]*?)\n\}/.exec($('#ds-styles').textContent);
+      if (m) m[1].replace(/\/\*[\s\S]*?\*\//g, '').split(';').forEach(function (d) {
+        var k = d.indexOf(':'); if (k > 0 && d.trim().indexOf('--') === 0) push(d.slice(0, k).trim(), d.slice(k + 1).trim().replace(/\s+/g, ' '));
+      });
+    }
+    return '/* PubFold tokens.css */\n:root {\n' + lines.join('\n') + '\n}\n';
+  }
+  (function () {
+    var css = buildTokensCss();
+    var area = $('#tokens-text'), box = $('#export-fallback'), notice = $('#export-notice');
+    var btn = $('#copy-tokens'), label = $('#copy-tokens-label'), status = $('#copy-tokens-status'), tog = $('#toggle-tokens');
+    area.value = css;
+    function reveal(selectAll) {
+      box.hidden = false; tog.textContent = 'ซ่อนโค้ด'; tog.setAttribute('aria-expanded', 'true');
+      if (selectAll) { area.focus(); area.select(); }
+    }
+    tog.addEventListener('click', function () {
+      if (box.hidden) { reveal(false); } else { box.hidden = true; notice.hidden = true; tog.textContent = 'แสดงโค้ด'; tog.setAttribute('aria-expanded', 'false'); }
+    });
+    btn.addEventListener('click', function () {
+      copyText(css).then(function (ok) {
+        if (ok) {
+          label.textContent = 'คัดลอกแล้ว';
+          setTimeout(function () { label.textContent = 'คัดลอก tokens.css'; }, 2000);
+          status.textContent = 'คัดลอก tokens.css แล้ว (' + css.split('\n').length + ' บรรทัด) วางลงไฟล์ได้เลย';
+          announce('คัดลอก tokens.css แล้ว', 2500);
+        } else {
+          notice.hidden = false; reveal(true);
+          status.textContent = 'คัดลอกอัตโนมัติไม่ได้ กรุณาคัดลอกจากกล่องโค้ดด้านล่างด้วยตัวเอง';
+          announce('คัดลอกอัตโนมัติไม่ได้ เลือกโค้ดไว้แล้ว กด Ctrl + C', 6000);
+        }
+      });
+    });
+  })();
+})();
+</script>
+</body>
+</html>

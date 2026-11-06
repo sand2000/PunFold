@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>PubFold ต้นแบบแอป</title>
+<meta name="description" content="ต้นแบบแอป PubFold: พิมพ์มา เดี๋ยวพับเก็บให้">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-background: #FFFFFF; --color-surface: #FFFFFF; --color-cream: #F6F0E4; --color-primary: #5B7948;
+  --color-secondary: #EAF0E4; --color-accent: #73523E; --color-text: #2D2823; --color-text-muted: #625B52; --color-border: #DED6C9;
+  --color-primary-hover: color-mix(in srgb, var(--color-primary) 82%, var(--color-text));
+  --color-accent-hover: color-mix(in srgb, var(--color-accent) 82%, var(--color-text));
+  --color-secondary-hover: color-mix(in srgb, var(--color-secondary) 78%, var(--color-primary));
+  --color-overlay: color-mix(in srgb, var(--color-text) 50%, transparent);
+  --control-border: 1.5px solid var(--color-text-muted);
+  --font-family-base: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+  --fs-32: 32px; --fs-24: 24px; --fs-20: 20px; --fs-16: 16px; --fs-14: 14px;
+  --lh-32: 44px; --lh-24: 34px; --lh-20: 30px; --lh-16: 28px; --lh-14: 24px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 18px;
+  --shadow-1: 0 1px 2px color-mix(in srgb, var(--color-text) 8%, transparent), 0 2px 8px color-mix(in srgb, var(--color-text) 6%, transparent);
+  --shadow-2: 0 4px 12px color-mix(in srgb, var(--color-text) 10%, transparent), 0 16px 40px color-mix(in srgb, var(--color-text) 16%, transparent);
+  --focus-ring: 3px solid var(--color-accent); --focus-offset: 2px;
+  --touch: 44px; --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--color-background); color: var(--color-text); font-family: var(--font-family-base); font-size: var(--fs-16); line-height: var(--lh-16); overflow-wrap: break-word; }
+h1, h2, h3, p, ul, ol { margin: 0; } ul, ol { padding: 0; list-style: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+svg { display: block; flex: none; }
+[hidden] { display: none !important; }
+.icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.icon--s { width: 20px; height: 20px; }
+.vh { position: absolute !important; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+:focus:not(:focus-visible) { outline: none; }
+.muted { color: var(--color-text-muted); } .sm { font-size: var(--fs-14); line-height: var(--lh-14); }
+
+/* ----- page shell (desktop shows a phone frame + prototype map) ----- */
+.stage { min-height: 100%; display: flex; justify-content: center; align-items: center; gap: var(--space-6); padding: var(--space-4); }
+.map { display: none; width: 240px; align-self: center; }
+.map h2 { font-size: var(--fs-16); line-height: var(--lh-16); margin-bottom: var(--space-2); }
+.map p { margin-bottom: var(--space-3); }
+.map a { display: flex; align-items: center; min-height: var(--touch); padding: 0 var(--space-3); border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-size: var(--fs-14); border: 1px solid transparent; }
+.map a:hover { background: var(--color-secondary); border-color: var(--color-primary); }
+.map a[aria-current="true"] { background: var(--color-secondary); font-weight: 600; border-color: var(--color-primary); }
+.map h3 { font-size: var(--fs-14); line-height: var(--lh-14); color: var(--color-text-muted); margin: var(--space-3) 0 var(--space-1) var(--space-3); font-weight: 600; }
+@media (min-width: 900px) { .map { display: block; } }
+
+.app { position: relative; width: 390px; max-width: 100%; height: min(844px, calc(100dvh - 32px)); background: var(--color-background); border: 1px solid var(--color-border); border-radius: 32px; box-shadow: var(--shadow-2); overflow: hidden; display: flex; flex-direction: column; }
+@media (max-width: 460px) {
+  .stage { padding: 0; display: block; }
+  .app { width: 100%; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+}
+.app__body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: var(--space-4) var(--space-4) var(--space-5); overscroll-behavior: contain; }
+.screen-title { font-size: var(--fs-24); line-height: var(--lh-24); font-weight: 700; }
+.screen-title:focus { outline: none; }
+h2.sec { font-size: var(--fs-20); line-height: var(--lh-20); font-weight: 600; margin: var(--space-5) 0 var(--space-3); display: flex; align-items: center; gap: var(--space-2); }
+.top { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); min-height: 64px; }
+.top .grow { flex: 1; min-width: 0; }
+
+/* ----- buttons ----- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 48px; min-width: var(--touch); padding: 0 var(--space-5); border-radius: var(--radius-md); border: 1.5px solid var(--color-primary); background: var(--color-primary); color: var(--color-surface); font-weight: 600; font-size: var(--fs-16); line-height: 1.3; text-align: center; transition: background-color 120ms var(--ease); }
+.btn:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+.btn--s { min-height: var(--touch); padding: 0 var(--space-4); font-size: var(--fs-14); }
+.btn--l { min-height: 56px; }
+.btn--block { width: 100%; }
+.btn--2 { background: var(--color-secondary); color: var(--color-text); }
+.btn--2:hover { background: var(--color-secondary-hover); border-color: var(--color-primary); }
+.btn--ghost { background: transparent; border-color: transparent; color: var(--color-primary); }
+.btn--ghost:hover { background: var(--color-secondary); color: var(--color-text); border-color: var(--color-secondary); }
+.btn--danger { background: var(--color-accent); border-color: var(--color-accent); }
+.btn--icon { padding: 0; width: 48px; }
+.btn--icon.btn--s { width: var(--touch); }
+.btn:disabled { background: var(--color-cream); border-color: var(--color-border); color: var(--color-text-muted); cursor: not-allowed; }
+.back { background: transparent; border: 0; width: var(--touch); height: var(--touch); display: grid; place-items: center; border-radius: var(--radius-md); }
+.back:hover { background: var(--color-secondary); }
+
+/* ----- chat ----- */
+.chat-top { padding: var(--space-3) var(--space-4) var(--space-2); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: var(--space-3); }
+.wordmark { font-size: var(--fs-24); line-height: var(--lh-24); font-weight: 700; letter-spacing: 0.2px; }
+.wordmark span { color: var(--color-primary); }
+.thread { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); scroll-behavior: smooth; }
+.birdmsg { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--space-2); align-items: end; }
+.birdmsg > .ava { width: 36px; height: 36px; align-self: start; }
+.birdmsg__col { display: grid; gap: var(--space-2); min-width: 0; justify-items: start; }
+.bubble { padding: var(--space-2) var(--space-4); border-radius: var(--radius-lg); max-width: 100%; }
+.bubble--bird { background: var(--color-cream); border-bottom-left-radius: var(--radius-sm); }
+.bubble--user { align-self: flex-end; max-width: 85%; background: var(--color-primary); color: var(--color-surface); border-bottom-right-radius: var(--radius-sm); }
+.composer-wrap { border-top: 1px solid var(--color-border); background: var(--color-surface); padding: var(--space-2) var(--space-3) var(--space-3); display: grid; gap: var(--space-2); }
+.composer { display: flex; gap: var(--space-2); align-items: flex-end; }
+.composer textarea { flex: 1; min-width: 0; min-height: 48px; max-height: 112px; resize: none; padding: 9px var(--space-4); border: var(--control-border); border-radius: var(--radius-lg); background: var(--color-surface); line-height: var(--lh-16); }
+.composer textarea::placeholder { color: var(--color-text-muted); opacity: 1; }
+.try { justify-self: start; }
+
+.seq { width: 100%; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-3); display: grid; gap: var(--space-2); }
+.seq__track { position: relative; height: 44px; display: flex; align-items: center; justify-content: space-between; color: var(--color-primary); }
+.seq__bird { width: 44px; height: 44px; }
+.seq__line { position: absolute; left: 52px; right: 52px; top: 50%; border-top: 2px dashed var(--color-border); }
+.seq__box { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--color-cream); border: 1.5px solid var(--color-border); }
+.seq.is-done .seq__box { background: var(--color-secondary); border-color: var(--color-primary); }
+.seq__env { position: absolute; left: 52px; top: 50%; width: 28px; height: 21px; margin-top: -10px; opacity: 0; }
+.seq.is-folding .seq__env { opacity: 1; animation: fold 900ms var(--ease) both; }
+.seq.is-flying .seq__env { opacity: 1; animation: fly 1700ms var(--ease) forwards; }
+@keyframes fold { from { transform: scale(0.3) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fly { from { left: 52px; } to { left: calc(100% - 52px - 28px); } }
+.seq__steps { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--fs-14); line-height: var(--lh-14); color: var(--color-text-muted); }
+.seq__steps li { display: inline-flex; align-items: center; gap: var(--space-1); }
+.seq__steps .dot { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--color-text-muted); display: grid; place-items: center; color: var(--color-surface); }
+.seq__steps .dot svg { width: 12px; height: 12px; stroke-width: 3; opacity: 0; }
+.seq__steps .is-done { color: var(--color-text); }
+.seq__steps .is-done .dot { background: var(--color-primary); border-color: var(--color-primary); }
+.seq__steps .is-done .dot svg { opacity: 1; }
+.seq__steps .is-current { color: var(--color-text); font-weight: 600; }
+.seq__steps .is-current .dot { border-color: var(--color-accent); border-width: 3px; }
+.seq__text { font-size: var(--fs-14); line-height: var(--lh-14); font-weight: 500; }
+
+.conf { width: 100%; background: var(--color-cream); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); display: grid; gap: var(--space-2); box-shadow: var(--shadow-1); }
+.conf__title { display: flex; gap: var(--space-2); font-weight: 600; }
+.conf__title .icon { color: var(--color-primary); margin-top: 2px; }
+.conf__meta { font-size: var(--fs-14); line-height: var(--lh-14); color: var(--color-text-muted); }
+.conf__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-1); }
+.conf__actions .btn { flex: 1 1 auto; }
+.conf__actions .btn--ghost:hover { background: var(--color-secondary); }
+.conf__status { font-size: var(--fs-14); line-height: var(--lh-14); }
+.conf.is-undone { background: var(--color-surface); border-style: dashed; }
+.conf.is-undone .conf__title .icon { color: var(--color-accent); }
+.wait { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-3); border: 1.5px dashed var(--color-accent); border-radius: var(--radius-lg); background: var(--color-surface); font-size: var(--fs-14); line-height: var(--lh-14); }
+.wait svg { width: 40px; height: 30px; }
+.replies { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.reading { background: var(--color-cream); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); display: grid; gap: var(--space-2); justify-items: start; }
+
+/* ----- bottom nav ----- */
+.nav { border-top: 1px solid var(--color-border); background: var(--color-surface); padding: var(--space-1) var(--space-2) var(--space-2); }
+.nav ul { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-1); }
+.tab { width: 100%; min-height: 56px; display: grid; justify-items: center; align-content: center; gap: 0; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-muted); font-size: var(--fs-14); line-height: 22px; font-weight: 500; }
+.tab:hover { background: var(--color-secondary); color: var(--color-text); }
+.tab[aria-current="page"] { background: var(--color-secondary); color: var(--color-text); font-weight: 700; }
+.tab[aria-current="page"] .icon { color: var(--color-primary); stroke-width: 2.25; }
+.app.kbd .nav { display: none; }
+
+/* ----- cards / rows ----- */
+.card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); box-shadow: var(--shadow-1); }
+.card--paper { background: var(--color-cream); box-shadow: none; }
+.next { display: grid; gap: var(--space-1); }
+.eyebrow { font-size: var(--fs-14); line-height: var(--lh-14); color: var(--color-text-muted); display: flex; align-items: center; gap: var(--space-2); font-weight: 500; }
+.big { font-size: var(--fs-20); line-height: var(--lh-20); font-weight: 600; }
+.list { display: grid; gap: var(--space-2); }
+.row { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); width: 100%; text-align: left; }
+button.row:hover { border-color: var(--color-primary); background: var(--color-secondary); }
+.row__main { flex: 1; min-width: 0; }
+.row__main b { font-weight: 600; }
+.row .lead { color: var(--color-primary); }
+.row.is-hl { background: var(--color-secondary); border-color: var(--color-primary); border-width: 2px; }
+.row.is-done .row__main b { text-decoration: line-through; color: var(--color-text-muted); }
+.tag { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--fs-14); line-height: var(--lh-14); font-weight: 600; padding: 0 var(--space-2); border-radius: var(--radius-sm); background: var(--color-cream); border: 1px solid var(--color-border); white-space: nowrap; }
+.tag .icon { width: 16px; height: 16px; }
+.tag--new { background: var(--color-secondary); border-color: var(--color-primary); }
+.check { width: var(--touch); height: var(--touch); flex: none; background: transparent; border: 0; display: grid; place-items: center; margin-left: calc(var(--space-2) * -1); }
+.check i { width: 24px; height: 24px; border: var(--control-border); border-radius: 6px; display: grid; place-items: center; color: var(--color-surface); background: var(--color-surface); }
+.check i svg { width: 16px; height: 16px; stroke-width: 3; opacity: 0; }
+.check[aria-checked="true"] i { background: var(--color-primary); border-color: var(--color-primary); }
+.check[aria-checked="true"] i svg { opacity: 1; }
+.empty { color: var(--color-text-muted); padding: var(--space-3); border: 1.5px dashed var(--color-border); border-radius: var(--radius-md); }
+
+/* ----- calendar ----- */
+.strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-1); margin: var(--space-3) 0 var(--space-4); }
+.day { min-height: 68px; border: 1.5px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); display: grid; justify-items: center; align-content: center; gap: 2px; padding: var(--space-1) 0; min-width: var(--touch); }
+.day:hover { border-color: var(--color-primary); }
+.day small { font-size: var(--fs-14); line-height: 20px; color: var(--color-text-muted); }
+.day b { font-size: var(--fs-16); line-height: 24px; font-weight: 600; }
+.day .dots { display: flex; gap: 3px; height: 8px; }
+.day .dots i { width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; }
+.day .dots i.sq { border-radius: 1px; background: var(--color-accent); }
+.day[aria-pressed="true"] { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); }
+.day[aria-pressed="true"] small { color: var(--color-surface); }
+.day[aria-pressed="true"] .dots i, .day[aria-pressed="true"] .dots i.sq { background: var(--color-surface); }
+.seldate { display: flex; align-items: baseline; gap: var(--space-3); }
+.seldate .num { font-size: var(--fs-32); line-height: var(--lh-32); font-weight: 700; color: var(--color-primary); }
+.type-ico { width: 40px; height: 40px; border-radius: var(--radius-md); display: grid; place-items: center; flex: none; }
+.type-ico--appt { background: var(--color-secondary); color: var(--color-primary); }
+.type-ico--task { background: var(--color-cream); color: var(--color-accent); }
+
+/* ----- mailbox ----- */
+.boxes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.box { position: relative; text-align: left; display: grid; gap: var(--space-1); align-content: start; min-height: 136px; padding: var(--space-4); background: var(--color-cream); border: 1.5px solid var(--color-border); border-radius: var(--radius-lg); min-width: 0; }
+.box:hover { border-color: var(--color-primary); }
+.box .ico { width: 44px; height: 44px; border-radius: 50%; background: var(--color-surface); border: 1px solid var(--color-border); display: grid; place-items: center; color: var(--color-primary); margin-bottom: var(--space-1); }
+.box b { font-weight: 600; }
+.box .leafy { position: absolute; top: var(--space-3); right: var(--space-3); width: 20px; height: 20px; color: var(--color-primary); }
+.box .dest { display: none; align-items: center; gap: var(--space-1); font-size: var(--fs-14); line-height: var(--lh-14); font-weight: 600; }
+.box .dest .icon { width: 16px; height: 16px; color: var(--color-primary); }
+.box.is-dest, .lb.is-dest { background: var(--color-secondary); border-color: var(--color-primary); border-width: 2.5px; padding: calc(var(--space-4) - 1px); }
+.box.is-dest .dest, .lb.is-dest .dest { display: inline-flex; }
+.lbgrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.lb { text-align: left; display: grid; gap: var(--space-2); align-content: start; min-height: 160px; padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); min-width: 0; }
+.lb:hover { border-color: var(--color-primary); box-shadow: var(--shadow-2); }
+.lb .ico { width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--color-secondary); color: var(--color-primary); display: grid; place-items: center; }
+.lb b { font-weight: 600; }
+.lb .dest { display: none; align-items: center; gap: var(--space-1); font-size: var(--fs-14); line-height: var(--lh-14); font-weight: 600; }
+.lb .dest .icon { width: 16px; height: 16px; color: var(--color-primary); }
+.lb.is-dest .ico { background: var(--color-surface); }
+.mb-head { display: flex; align-items: center; gap: var(--space-2); }
+.mb-head .icon { color: var(--color-primary); width: 20px; height: 20px; }
+
+/* ----- detail pages ----- */
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); padding: var(--space-1); background: var(--color-cream); border-radius: var(--radius-md); margin: var(--space-3) 0; }
+.tabs button { min-height: var(--touch); border: 0; border-radius: var(--radius-sm); background: transparent; font-weight: 500; }
+.tabs button[aria-selected="true"] { background: var(--color-surface); font-weight: 700; box-shadow: var(--shadow-1); outline: 1.5px solid var(--color-text-muted); outline-offset: -1.5px; }
+.switch { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 56px; padding: var(--space-2) var(--space-3); text-align: left; background: var(--color-surface); border: var(--control-border); border-radius: var(--radius-md); }
+.switch .tr { width: 48px; height: 28px; border-radius: 14px; border: var(--control-border); background: var(--color-surface); position: relative; flex: none; transition: background-color 120ms var(--ease); }
+.switch .tr::after { content: ""; position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: var(--color-text-muted); transition: transform 120ms var(--ease); }
+.switch[aria-checked="true"] .tr { background: var(--color-primary); border-color: var(--color-primary); }
+.switch[aria-checked="true"] .tr::after { background: var(--color-surface); transform: translateX(20px); }
+.switch .st { margin-left: auto; font-weight: 600; font-size: var(--fs-14); }
+.timeline { position: relative; display: grid; gap: var(--space-4); padding-left: var(--space-5); margin-top: var(--space-3); }
+.timeline::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; border-left: 2px solid var(--color-border); }
+.tl { position: relative; }
+.tl::before { content: ""; position: absolute; left: -24px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: var(--color-surface); border: 2.5px solid var(--color-primary); }
+.tl .when { font-size: var(--fs-14); line-height: var(--lh-14); font-weight: 600; color: var(--color-text-muted); }
+.tl p.txt { background: var(--color-cream); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-1); }
+.sticky-act { position: sticky; bottom: calc(var(--space-5) * -1); margin: var(--space-4) calc(var(--space-4) * -1) calc(var(--space-5) * -1); padding: var(--space-3) var(--space-4) var(--space-4); background: linear-gradient(to bottom, transparent, var(--color-surface) 30%); }
+
+/* ----- forms / sheet ----- */
+.field { display: grid; gap: var(--space-1); margin-bottom: var(--space-3); }
+.field label, .field .lbl { font-weight: 500; }
+.input { width: 100%; min-height: 48px; padding: var(--space-2) var(--space-4); border: var(--control-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.input:hover { border-color: var(--color-text); }
+.input[aria-invalid="true"] { border-color: var(--color-accent); border-width: 2.5px; }
+textarea.input { min-height: 120px; resize: vertical; }
+.err { display: flex; gap: var(--space-2); color: var(--color-accent); font-weight: 500; font-size: var(--fs-14); line-height: var(--lh-14); }
+.err .icon { width: 20px; height: 20px; }
+.chk { display: flex; align-items: center; gap: var(--space-3); min-height: var(--touch); }
+.chk input { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; margin: 0; border: var(--control-border); border-radius: 6px; background: var(--color-surface); display: grid; place-content: center; flex: none; }
+.chk input::after { content: ""; width: 7px; height: 13px; border: solid var(--color-surface); border-width: 0 2.5px 2.5px 0; transform: translateY(-1px) rotate(45deg); display: none; }
+.chk input:checked { background: var(--color-primary); border-color: var(--color-primary); }
+.chk input:checked::after { display: block; }
+.sheet-wrap { position: absolute; inset: 0; z-index: 50; display: flex; align-items: flex-end; background: var(--color-overlay); }
+.sheet { width: 100%; max-height: 88%; overflow-y: auto; background: var(--color-surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: var(--space-4) var(--space-4) var(--space-5); box-shadow: var(--shadow-2); animation: up 200ms var(--ease); }
+@keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.sheet__head h2 { font-size: var(--fs-20); line-height: var(--lh-20); font-weight: 600; }
+.sheet__foot { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
+.sheet__foot .btn { flex: 1; }
+.kv { display: grid; grid-template-columns: 96px 1fr; gap: var(--space-1) var(--space-3); margin: 0; }
+.kv dt { color: var(--color-text-muted); font-size: var(--fs-14); line-height: var(--lh-14); } .kv dd { margin: 0; }
+.live-toast { position: absolute; left: var(--space-4); right: var(--space-4); bottom: 88px; z-index: 60; background: var(--color-text); color: var(--color-surface); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-2); font-size: var(--fs-14); line-height: var(--lh-14); display: flex; gap: var(--space-2); opacity: 0; visibility: hidden; transition: opacity 200ms var(--ease), visibility 0s linear 200ms; }
+.live-toast.on { opacity: 1; visibility: visible; transition-delay: 0s; }
+
+/* mascot */
+.bird-body { fill: var(--color-cream); stroke: var(--color-accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.bird-beak { fill: var(--color-accent); } .bird-eye { fill: var(--color-text); } .bird-satchel { fill: var(--color-accent); }
+.bird-line { fill: none; stroke: var(--color-accent); stroke-width: 2.5; stroke-linecap: round; }
+.bird-fold { fill: none; stroke: var(--color-accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.bird-flap { fill: none; stroke: var(--color-cream); stroke-width: 2; stroke-linecap: round; }
+.env-body { fill: var(--color-cream); stroke: var(--color-accent); stroke-width: 1.75; stroke-linejoin: round; }
+.env-fold { fill: none; stroke: var(--color-accent); stroke-width: 1.75; stroke-linejoin: round; stroke-linecap: round; }
+
+/* ----- desktop (>= 1024px): sidebar + main + context panel ----- */
+.side-brand, .side-life, .side-foot, .chat-title, .aside { display: none; }
+.cols { display: block; }
+@media (min-width: 1024px) {
+  .stage { display: block; padding: 0; min-height: 100%; }
+  .map { display: none; }
+  .app { width: 100%; max-width: none; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+  .app__body { display: grid; grid-template-columns: 272px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .nav { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5) var(--space-4); border-top: 0; border-right: 1px solid var(--color-border); overflow-y: auto; }
+  .screen { grid-column: 2; grid-row: 1; --gut: max(32px, calc((100% - 880px) / 2)); }
+  #s-chat { --gut: max(32px, calc((100% - 720px) / 2)); }
+  .nav ul { grid-template-columns: 1fr; gap: var(--space-1); }
+  .tab { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: var(--space-3); min-height: 48px; padding: 0 var(--space-4); font-size: var(--fs-16); line-height: var(--lh-16); text-align: left; }
+  .tab[aria-current="page"] { box-shadow: inset 3px 0 0 var(--color-primary); }
+  .side-brand { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-2) var(--space-4); border-bottom: 1px solid var(--color-border); }
+  .side-brand svg { width: 56px; height: 56px; }
+  .side-life { display: block; }
+  .side-life h2 { font-size: var(--fs-14); line-height: var(--lh-14); color: var(--color-text-muted); font-weight: 600; padding: 0 var(--space-4); margin-bottom: var(--space-1); }
+  .side-link { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--touch); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-md); background: transparent; text-align: left; }
+  .side-link .icon { color: var(--color-primary); }
+  .side-link:hover { background: var(--color-secondary); }
+  .side-link[aria-current="page"] { background: var(--color-secondary); font-weight: 600; box-shadow: inset 3px 0 0 var(--color-primary); }
+  .side-foot { display: block; margin-top: auto; padding: var(--space-4); background: var(--color-cream); border-radius: var(--radius-lg); }
+  .side-foot .icon { color: var(--color-primary); margin-bottom: var(--space-1); }
+
+  .screen-title { font-size: var(--fs-32); line-height: var(--lh-32); }
+  .top { padding: var(--space-6) var(--gut) var(--space-3); border-bottom: 0; min-height: 0; }
+  .scroll { padding: var(--space-2) var(--gut) var(--space-6); }
+  .sticky-act { margin: var(--space-4) 0 0; padding: var(--space-3) 0 var(--space-5); }
+  .chat-top { display: none; }
+  .chat-title { display: block; padding: var(--space-6) var(--gut) var(--space-2); }
+  .thread { padding: var(--space-4) var(--gut) var(--space-5); gap: var(--space-4); }
+  .birdmsg { grid-template-columns: 44px minmax(0, 1fr); gap: var(--space-3); }
+  .birdmsg > .ava { width: 44px; height: 44px; }
+  .bubble--user { max-width: 70%; }
+  .seq, .conf { max-width: 520px; }
+  .composer-wrap { padding: var(--space-2) var(--gut) var(--space-6); border-top: 0; }
+  .composer textarea { padding: 13px var(--space-5); box-shadow: var(--shadow-1); }
+  .boxes, .lbgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+  .box { min-height: 176px; } .lb { min-height: 184px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); align-items: start; }
+  .cols > div > h2.sec:first-child { margin-top: 0; }
+  .strip { gap: var(--space-3); } .day { min-height: 88px; }
+  .sheet-wrap { align-items: center; justify-content: center; }
+  .sheet { width: 480px; max-width: calc(100% - 48px); border-radius: var(--radius-lg); }
+  .live-toast { left: 50%; right: auto; transform: translateX(-50%); bottom: var(--space-6); width: max-content; max-width: 480px; }
+}
+@media (min-width: 1280px) {
+  .app__body { grid-template-columns: 272px minmax(0, 1fr) 360px; }
+  .aside { display: flex; flex-direction: column; gap: var(--space-5); grid-column: 3; grid-row: 1; padding: var(--space-6) var(--space-5); border-left: 1px solid var(--color-border); overflow-y: auto; }
+  .aside h2.sec { margin: 0 0 var(--space-3); }
+  .aside__hero { position: relative; background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--shadow-1); border-radius: var(--radius-lg); padding: var(--space-5) var(--space-4) var(--space-4); text-align: center; }
+  .aside__hero .fly { width: 100%; max-width: 280px; height: auto; aspect-ratio: 240 / 180; margin: 0 auto; }
+  .aside__hero .sprig { position: absolute; top: var(--space-3); right: var(--space-3); width: 56px; height: 56px; color: var(--color-primary); }
+  .aside__t { font-size: var(--fs-20); line-height: var(--lh-20); font-weight: 600; margin-top: var(--space-2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .seq.is-flying .seq__env { animation: none; left: 50%; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="pub-bird" viewBox="0 0 96 96">
+    <path class="bird-body" d="M22 58 L5 66 L25 73 Z"/>
+    <ellipse class="bird-body" cx="46" cy="58" rx="28" ry="23"/>
+    <path class="bird-body" d="M28 53 C40 43 58 48 63 60 C52 73 34 69 28 53 Z"/>
+    <path class="bird-fold" d="M33 55 L46 63 L58 56 M35 65 L44 59 M56 66 L48 60"/>
+    <circle class="bird-body" cx="62" cy="33" r="17"/>
+    <path class="bird-body" d="M56 18 C57 9 64 6 69 9 C65 11 64 14 65 17 Z"/>
+    <path class="bird-beak" d="M77 31 L90 36 L77 42 Z"/>
+    <circle class="bird-eye" cx="68" cy="31" r="2.6"/>
+    <path class="bird-line" d="M52 43 L38 68"/>
+    <rect class="bird-satchel" x="28" y="64" width="28" height="19" rx="4"/>
+    <path class="bird-flap" d="M31 70 H53"/>
+    <path class="bird-line" d="M40 81 V90 M52 81 V90"/>
+  </symbol>
+  <symbol id="pub-fly" viewBox="0 0 240 180">
+    <ellipse cx="120" cy="170" rx="62" ry="5" style="fill:var(--color-accent);opacity:.12"/>
+    <path class="bird-body" d="M70 108 C42 98 20 108 8 126 C30 128 46 126 68 122 Z"/>
+    <path class="bird-body" d="M70 116 C46 122 28 138 22 154 C42 148 58 140 74 128 Z"/>
+    <path class="bird-body" d="M128 82 C142 44 172 24 200 20 C196 46 180 70 158 88 Z"/>
+    <ellipse class="bird-body" cx="118" cy="106" rx="56" ry="35" transform="rotate(-10 118 106)"/>
+    <path class="bird-line" d="M150 90 L98 136" style="stroke-width:3"/>
+    <path class="bird-satchel" d="M82 124 L112 116 L120 146 L90 154 Z" style="stroke:var(--color-accent);stroke-width:2;stroke-linejoin:round"/>
+    <path class="bird-flap" d="M84 130 L116 122"/>
+    <circle cx="103" cy="133" r="3" style="fill:var(--color-cream)"/>
+    <path class="bird-line" d="M110 144 L106 158 M124 144 L122 160" style="stroke-width:2.5"/>
+    <path class="bird-body" d="M128 94 C110 54 78 28 36 22 C30 48 46 78 72 98 C90 110 112 108 128 94 Z"/>
+    <path class="bird-fold" d="M52 36 C64 58 80 78 102 92 M44 52 C58 70 74 86 94 98 M64 30 C78 48 92 66 112 82" style="opacity:.55"/>
+    <path class="env-body" d="M64 56 L106 63 L99 88 L58 81 Z"/>
+    <path class="env-fold" d="M64 56 L83 74 L106 63" style="stroke-width:2.5"/>
+    <circle class="bird-body" cx="168" cy="76" r="24"/>
+    <circle class="bird-eye" cx="177" cy="70" r="3.6"/>
+    <path class="bird-beak" d="M190 76 L205 83 L190 90 Z"/>
+    <path class="env-body" d="M192 90 L224 82 L229 106 L197 114 Z"/>
+    <path class="env-fold" d="M193 91 L211 103 L225 83"/>
+  </symbol>
+  <symbol id="pub-sprig" viewBox="0 0 56 56">
+    <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 50 C16 40 30 28 50 8"/><path d="M14 42 C8 36 8 28 14 24 C20 28 20 36 14 42 Z"/><path d="M24 32 C20 24 24 18 30 16 C34 22 32 28 24 32 Z"/><path d="M34 22 C32 14 36 8 42 8 C44 14 42 20 34 22 Z"/><path d="M22 40 C28 40 34 44 36 50 C28 52 22 48 22 40 Z"/></g>
+  </symbol>
+  <symbol id="pub-env" viewBox="0 0 32 24"><rect class="env-body" x="1.5" y="1.5" width="29" height="21" rx="3"/><path class="env-fold" d="M3 5 L16 14 L29 5"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19c3-4 6-7 10-9"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-4 3v-3H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-mailbox" viewBox="0 0 24 24"><path d="M4 20V10a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v10z"/><path d="M8.5 11h7M9 20v-4h6v4"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.500 4.500L19 7"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+  <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2.500 4L17 12H5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></symbol>
+  <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.500 10.900c.6.500 1 1.200 1 2.100h5c0-.9.4-1.600 1-2.100A6 6 0 0 0 12 3z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100-4.400-4.300 6.100-.9z"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1.500"/><rect x="3" y="7" width="18" height="3" rx="1"/><path d="M12 7v13M12 7c-1-3-5-3.500-5-1.500S10 7 12 7zm0 0c1-3 5-3.500 5-1.500S14 7 12 7z"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="m4 20 1-4L16.500 4.500a2 2 0 0 1 3 3L8 19zM14 7l3 3"/></symbol>
+  <symbol id="i-food" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2.500 1-4 4-4 8h4"/></symbol>
+  <symbol id="i-run" viewBox="0 0 24 24"><circle cx="14" cy="4.500" r="1.800"/><path d="m10 21 2-6 3 2v4M7 12l3.500-3 3 1 2 3H19M12 15l-1.500-5"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+</defs></svg>
+
+<div class="stage">
+  <aside class="map" aria-label="แผนผังต้นแบบ">
+    <h2>แผนผังต้นแบบ</h2>
+    <p class="sm muted">เส้นทางหลัก: แชท → ส่งซอง → เปิดงาน → วันนี้</p>
+    <h3>หน้าหลัก</h3>
+    <a href="#/chat" data-map="chat">แชท</a><a href="#/today" data-map="today">วันนี้</a><a href="#/calendar" data-map="calendar">ปฏิทิน</a><a href="#/mailbox" data-map="mailbox">ตู้จดหมาย</a>
+    <h3>My Life Board</h3>
+    <a href="#/horoscope" data-map="horoscope">ดูดวง</a><a href="#/occasions" data-map="occasions">วันสำคัญ</a><a href="#/health" data-map="health">บันทึกสุขภาพ</a><a href="#/journal" data-map="journal">บันทึกประจำวัน</a>
+    <h3>สถานะแชท</h3>
+    <p class="sm muted" style="margin-left:12px">กด “ลองส่งตัวอย่าง” ในหน้าแชทเพื่อดูทั้ง 6 สถานะ</p>
+  </aside>
+
+  <div class="app" id="app">
+    <div class="app__body" id="body">
+
+      <!-- ===== แชท ===== -->
+      <section class="screen" id="s-chat" aria-label="แชท">
+        <header class="chat-top">
+          <svg width="44" height="44" aria-hidden="true"><use href="#pub-bird"/></svg>
+          <div><h1 class="wordmark" tabindex="-1" id="h-chat">Pub<span>Fold</span></h1><p class="sm muted">พิมพ์มา เดี๋ยวพับเก็บให้</p></div>
+        </header>
+        <div class="chat-title"><h1 class="screen-title" tabindex="-1">แชทกับพับ</h1><p class="muted">พิมพ์มา เดี๋ยวพับเก็บให้</p></div>
+        <div class="thread" id="thread" role="log" aria-live="polite" aria-label="บทสนทนากับพับ" tabindex="0"></div>
+        <div class="composer-wrap">
+          <button type="button" class="btn btn--ghost btn--s try" data-act="samples"><svg class="icon icon--s" aria-hidden="true"><use href="#i-leaf"/></svg>ลองส่งตัวอย่าง</button>
+          <form class="composer" id="composer" autocomplete="off">
+            <label class="vh" for="msg">ข้อความถึงพับ</label>
+            <textarea id="msg" rows="1" placeholder="วันนี้มีอะไรให้พับเก็บไหม?"></textarea>
+            <button class="btn btn--icon" id="send" type="submit" aria-label="ส่งซองให้พับ" disabled><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg></button>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen" id="s-today" aria-label="วันนี้" hidden></section>
+      <section class="screen" id="s-calendar" aria-label="ปฏิทิน" hidden></section>
+      <section class="screen" id="s-mailbox" aria-label="ตู้จดหมาย" hidden></section>
+      <section class="screen" id="s-horoscope" aria-label="ดูดวง" hidden></section>
+      <section class="screen" id="s-occasions" aria-label="วันสำคัญ" hidden></section>
+      <section class="screen" id="s-health" aria-label="บันทึกสุขภาพ" hidden></section>
+      <section class="screen" id="s-journal" aria-label="บันทึกประจำวัน" hidden></section>
+
+      <nav class="nav" aria-label="เมนูหลัก">
+        <div class="side-brand"><svg aria-hidden="true"><use href="#pub-bird"/></svg><div><p class="wordmark">Pub<span>Fold</span></p><p class="sm muted">ผู้ช่วยเก็บชีวิตประจำวัน</p></div></div>
+        <ul>
+          <li><button class="tab" data-go="chat" type="button"><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg>แชท</button></li>
+          <li><button class="tab" data-go="today" type="button"><svg class="icon" aria-hidden="true"><use href="#i-today"/></svg>วันนี้</button></li>
+          <li><button class="tab" data-go="calendar" type="button"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>ปฏิทิน</button></li>
+          <li><button class="tab" data-go="mailbox" type="button"><svg class="icon" aria-hidden="true"><use href="#i-mailbox"/></svg>ตู้จดหมาย</button></li>
+        </ul>
+        <div class="side-life">
+          <h2>My Life Board</h2>
+          <button class="side-link" type="button" data-go="horoscope"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>ดูดวง</button>
+          <button class="side-link" type="button" data-go="occasions"><svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg>วันสำคัญ</button>
+          <button class="side-link" type="button" data-go="health"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg>บันทึกสุขภาพ</button>
+          <button class="side-link" type="button" data-go="journal"><svg class="icon" aria-hidden="true"><use href="#i-pen"/></svg>บันทึกประจำวัน</button>
+        </div>
+        <div class="side-foot"><svg class="icon" aria-hidden="true"><use href="#i-leaf"/></svg><p class="sm"><b>พิมพ์มา เดี๋ยวพับเก็บให้</b></p><p class="sm muted">พุธ 11 พ.ย. 2569</p></div>
+      </nav>
+      <aside class="aside" id="aside" aria-label="สถานะของพับ"></aside>
+    </div>
+    <div class="live-toast" id="toast" aria-hidden="true"><svg class="icon icon--s" aria-hidden="true"><use href="#i-check-circle"/></svg><span id="toast-t"></span></div>
+    <div class="vh" id="live" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+var ico = function (id, c) { return '<svg class="icon ' + (c || '') + '" aria-hidden="true"><use href="#' + id + '"/></svg>'; };
+var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+/* ---------- data ---------- */
+var TODAY = new Date(2026, 10, 11); // พุธ 11 พ.ย. 2569
+var DAYN = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+var DAYF = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+var MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+var dayF = function (d) { return DAYF[new Date(2026, 10, d).getDay()]; };
+var dLabel = function (d) { return dayF(d) + ' ' + d + ' พ.ย.'; };
+var BOX = {
+  work: { name: 'งาน', icon: 'i-briefcase' }, appt: { name: 'นัดหมาย', icon: 'i-calendar' },
+  remind: { name: 'เตือนความจำ', icon: 'i-bell' }, notes: { name: 'โน้ตและไอเดีย', icon: 'i-bulb' }
+};
+var S = {
+  route: 'chat', calDay: 11, hl: null, dest: null, horoOn: false, horoTab: 'today',
+  items: [
+    { id: 'meet', box: 'appt', title: 'ประชุมทีมออกแบบ', d: 11, time: '14:00', place: 'ห้องประชุม 3' },
+    { id: 'report', box: 'work', title: 'ส่งรายงานสรุปไตรมาส', d: 12, period: 'พรุ่งนี้ ก่อน 17:00' },
+    { id: 'gift', box: 'work', title: 'ซื้อของขวัญวันเกิดแม่', d: 14, period: 'ทั้งวัน' },
+    { id: 'dentist', box: 'appt', title: 'ตรวจฟัน', d: 15, time: '10:30', place: 'คลินิกทันตกรรม' },
+    { id: 'r1', box: 'remind', title: 'กินวิตามินหลังอาหารเย็น', d: 11, time: '19:00' },
+    { id: 'r2', box: 'remind', title: 'จ่ายค่าไฟ', d: 15, time: '09:00' },
+    { id: 'n1', box: 'notes', title: 'ไอเดียของขวัญแม่: ผ้าพันคอไหม' }, { id: 'n2', box: 'notes', title: 'ร้านกาแฟที่อยากลอง' },
+    { id: 'n3', box: 'notes', title: 'หนังสือที่จะอ่านเดือนหน้า' }, { id: 'n4', box: 'notes', title: 'ธีมสไลด์โทนเขียวครีม' }
+  ],
+  occ: [
+    { id: 'o1', title: 'วันเกิดแม่', date: '2026-11-18', yearly: true, remind: 'ล่วงหน้า 1 วัน' },
+    { id: 'o2', title: 'วันครบรอบวันแรกที่เข้าทำงาน', date: '2026-12-02', yearly: true, remind: 'ไม่เตือน' },
+    { id: 'o3', title: 'วันเกิดน้อง', date: '2026-12-25', yearly: true, remind: 'ล่วงหน้า 7 วัน' }
+  ],
+  health: [
+    { id: 'h1', type: 'food', title: 'โจ๊กหมู', time: '08:10' }, { id: 'h2', type: 'food', title: 'ผลไม้รวม', time: '15:30' },
+    { id: 'h3', type: 'ex', title: 'ยืดเหยียด', dur: '10 นาที', time: '07:30' }
+  ],
+  diary: [
+    { id: 'j1', d: 9, text: 'วันนี้ฝนตกทั้งวัน นั่งอ่านหนังสือเงียบ ๆ แล้วรู้สึกสงบดี' },
+    { id: 'j2', d: 7, text: 'คุยกับแม่นาน ๆ ครั้งแรกในรอบสัปดาห์ คิดถึงบ้านนิดหน่อย' }
+  ]
+};
+var HORO = {
+  today: 'วันนี้เหมาะกับการจัดของเล็ก ๆ ให้เป็นระเบียบ งานที่ค้างอยู่จะคลี่คลายเร็วกว่าที่คิด ช่วงบ่ายควรพักสายตาสักครู่ แล้วเย็นนี้จะมีข่าวดีเรื่องงานเข้ามา',
+  month: 'เดือนนี้จังหวะการงานค่อย ๆ ดีขึ้น ควรวางแผนเรื่องเงินให้ชัดเจนก่อนกลางเดือน ความสัมพันธ์กับคนใกล้ตัวอบอุ่นขึ้น โดยเฉพาะครอบครัว'
+};
+function rec(id) { return S.items.filter(function (x) { return x.id === id; })[0] || S.health.filter(function (x) { return x.id === id; })[0] || S.diary.filter(function (x) { return x.id === id; })[0]; }
+function kind(id) { return S.items.some(function (x) { return x.id === id; }) ? 'item' : S.health.some(function (x) { return x.id === id; }) ? 'health' : 'diary'; }
+function days(o) {
+  var t = new Date(o.date + 'T00:00:00'); if (o.yearly) while (t < TODAY) t.setFullYear(t.getFullYear() + 1);
+  return { n: Math.round((t - TODAY) / 864e5), date: t };
+}
+var fmtD = function (t) { return t.getDate() + ' ' + MON[t.getMonth()] + ' ' + (t.getFullYear() + 543); };
+var inN = function (n) { return n === 0 ? 'วันนี้' : n < 0 ? 'ผ่านไปแล้ว' : 'อีก ' + n + ' วัน'; };
+var occSorted = function () { return S.occ.map(function (o) { return Object.assign({ x: days(o) }, o); }).sort(function (a, b) { return a.x.n - b.x.n; }); };
+var counts = function () { return { f: S.health.filter(function (h) { return h.type === 'food'; }).length, e: S.health.filter(function (h) { return h.type === 'ex'; }).length }; };
+var todayDiary = function () { return S.diary.some(function (j) { return j.d === 11; }); };
+
+/* ---------- feedback ---------- */
+var toastT;
+function toast(msg) {
+  $('#toast-t').textContent = msg; $('#toast').classList.add('on');
+  $('#live').textContent = ''; setTimeout(function () { $('#live').textContent = msg; }, 50);
+  clearTimeout(toastT); toastT = setTimeout(function () { $('#toast').classList.remove('on'); }, 3000);
+}
+
+/* ---------- routing ---------- */
+var MAIN = ['chat', 'today', 'calendar', 'mailbox'];
+var SCREENS = {}; ['chat', 'today', 'calendar', 'mailbox', 'horoscope', 'occasions', 'health', 'journal'].forEach(function (r) { SCREENS[r] = $('#s-' + r); });
+function go(r) { if (location.hash === '#/' + r) show(r); else location.hash = '#/' + r; }
+function show(r, noFocus) {
+  if (!SCREENS[r]) r = 'chat';
+  S.route = r;
+  Object.keys(SCREENS).forEach(function (k) { SCREENS[k].hidden = k !== r; });
+  render(r);
+  var cur = MAIN.indexOf(r) >= 0 ? r : 'mailbox';
+  $$('.tab').forEach(function (t) { if (t.dataset.go === cur) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
+  $$('.map a').forEach(function (a) { a.setAttribute('aria-current', String(a.dataset.map === r)); });
+  $$('.side-link').forEach(function (a) { if (a.dataset.go === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  var h = $$('[tabindex="-1"]', SCREENS[r]).filter(function (x) { return x.offsetParent !== null; })[0]; if (h && !noFocus) h.focus({ preventScroll: true });
+  var sc = $('.scroll', SCREENS[r]); if (sc) sc.scrollTop = 0;
+  if (r === 'chat') { thread.style.scrollBehavior = 'auto'; thread.scrollTop = thread.scrollHeight; thread.style.scrollBehavior = ''; }
+  if (S.hl) { var id = S.hl; setTimeout(function () { var el = $('[data-hl="' + id + '"]', SCREENS[r]); if (el) el.scrollIntoView({ block: 'center' }); }, 30); setTimeout(function () { S.hl = null; if (S.route === r) render(r); }, 3500); }
+}
+window.addEventListener('hashchange', function () { show(location.hash.replace('#/', '') || 'chat'); });
+
+/* ---------- screen renderers ---------- */
+function back(title, sub) {
+  return '<header class="top"><button class="back" type="button" data-go="mailbox" aria-label="ย้อนกลับไปตู้จดหมาย">' + ico('i-back') + '</button><div class="grow"><h1 class="screen-title" tabindex="-1">' + title + '</h1>' + (sub ? '<p class="sm muted">' + sub + '</p>' : '') + '</div></header>';
+}
+function itemRow(it, opts) {
+  opts = opts || {};
+  var hl = S.hl === it.id;
+  var sub = it.box === 'appt' ? it.time + ' น.' + (it.place ? ' · ' + it.place : '') : (it.period || '') + (it.remind ? ' · แจ้งเตือน ' + it.remind + ' น.' : '');
+  return '<div class="row' + (it.done ? ' is-done' : '') + (hl ? ' is-hl' : '') + '" data-hl="' + it.id + '">' +
+    (opts.check ? '<button class="check" role="checkbox" aria-checked="' + !!it.done + '" data-act="done" data-id="' + it.id + '" aria-label="ทำเครื่องหมายเสร็จ: ' + esc(it.title) + '"><i>' + ico('i-check') + '</i></button>' : '<span class="type-ico ' + (it.box === 'appt' ? 'type-ico--appt' : 'type-ico--task') + '">' + ico(it.box === 'appt' ? 'i-calendar' : 'i-flag') + '</span>') +
+    '<div class="row__main"><b>' + esc(it.title) + '</b><p class="sm muted">' + esc(sub) + '</p></div>' +
+    (it.done ? '<span class="tag">' + ico('i-check') + 'เสร็จแล้ว</span>' : hl ? '<span class="tag tag--new">' + ico('i-leaf') + 'เพิ่งเพิ่ม</span>' : '') + '</div>';
+}
+function renderToday() {
+  var night = S.items.filter(function (i) { return i.box === 'work' && i.d === 11; });
+  var tmr = S.items.filter(function (i) { return i.box === 'work' && i.d === 12; });
+  var nextA = S.items.filter(function (i) { return i.box === 'appt' && i.d === 11; })[0];
+  var oc = occSorted().filter(function (o) { return o.x.n >= 0; }).slice(0, 2), c = counts();
+  var h = '<header class="top"><div class="grow"><h1 class="screen-title" tabindex="-1">วันนี้</h1><p class="sm muted">' + dayF(11) + ' 11 พ.ย. 2569</p></div></header><div class="scroll"><div class="cols"><div>';
+  h += '<h2 class="sec" style="margin-top:0">นัดหมายถัดไป</h2>';
+  h += nextA ? '<div class="card card--paper next"><p class="eyebrow">' + ico('i-clock', 'icon--s') + 'วันนี้ เวลา ' + nextA.time + ' น.</p><p class="big">' + esc(nextA.title) + '</p><p class="sm muted">' + esc(nextA.place) + '</p></div>' : '<p class="empty">วันนี้ไม่มีนัดหมาย</p>';
+  h += '<h2 class="sec">คืนนี้</h2><div class="list">' + (night.length ? night.map(function (i) { return itemRow(i, { check: true }); }).join('') : '<p class="empty">ไม่มีงานคืนนี้ พักผ่อนได้เลย</p>') + '</div>';
+  if (tmr.length) h += '<h2 class="sec">พรุ่งนี้</h2><div class="list">' + tmr.map(function (i) { return itemRow(i, { check: true }); }).join('') + '</div>';
+  h += '</div><div><h2 class="sec"><span class="mb-head">' + ico('i-mailbox') + 'จากตู้จดหมาย</span></h2><div class="list">';
+  oc.forEach(function (o) { h += '<button class="row" type="button" data-go="occasions"><span class="type-ico type-ico--appt">' + ico('i-gift') + '</span><span class="row__main"><b>' + esc(o.title) + '</b><span class="sm muted" style="display:block">' + fmtD(o.x.date) + ' · ' + inN(o.x.n) + '</span></span>' + ico('i-next') + '</button>'; });
+  h += '<button class="row" type="button" data-go="health"><span class="type-ico type-ico--appt">' + ico('i-pulse') + '</span><span class="row__main"><b>สุขภาพวันนี้</b><span class="sm muted" style="display:block">อาหาร ' + c.f + ' มื้อ · ออกกำลังกาย ' + c.e + ' ครั้ง</span></span>' + ico('i-next') + '</button>';
+  if (S.horoOn) h += '<button class="row" type="button" data-go="horoscope"><span class="type-ico type-ico--appt">' + ico('i-star') + '</span><span class="row__main"><b>ดวงวันนี้</b><span class="sm muted" style="display:block">' + esc(HORO.today.slice(0, 44)) + '…</span></span>' + ico('i-next') + '</button>';
+  return h + '</div></div></div></div>';
+}
+function renderCalendar() {
+  var h = '<header class="top"><div class="grow"><h1 class="screen-title" tabindex="-1">ปฏิทิน</h1><p class="sm muted">พฤศจิกายน 2569</p></div></header><div class="scroll"><div class="strip" role="group" aria-label="เลือกวัน สัปดาห์ 9–15 พ.ย.">';
+  for (var d = 9; d <= 15; d++) {
+    var its = S.items.filter(function (i) { return i.d === d && (i.box === 'work' || i.box === 'appt'); });
+    var a = its.filter(function (i) { return i.box === 'appt'; }).length, t = its.length - a;
+    var lab = dayF(d) + ' ' + d + ' พ.ย.' + (d === 11 ? ' (วันนี้)' : '') + (a ? ' นัดหมาย ' + a : '') + (t ? ' งาน ' + t : '');
+    h += '<button class="day" type="button" data-act="cal-day" data-d="' + d + '" aria-pressed="' + (S.calDay === d) + '" aria-label="' + lab + '"><small>' + DAYN[new Date(2026, 10, d).getDay()] + '</small><b>' + d + '</b><span class="dots" aria-hidden="true">' + (a ? '<i></i>' : '') + (t ? '<i class="sq"></i>' : '') + '</span></button>';
+  }
+  var list = S.items.filter(function (i) { return i.d === S.calDay && (i.box === 'work' || i.box === 'appt'); }).sort(function (x, y) { return (x.box === 'appt' ? 0 : 1) - (y.box === 'appt' ? 0 : 1); });
+  h += '</div><div class="seldate"><span class="num">' + S.calDay + '</span><div><h2 class="big" style="margin:0">' + dayF(S.calDay) + 'ที่ ' + S.calDay + ' พ.ย. 2569</h2>' + (S.calDay === 11 ? '<p class="sm muted">วันนี้</p>' : '') + '</div></div>';
+  h += '<p class="sm muted" style="margin:var(--space-3) 0 var(--space-2);display:flex;gap:var(--space-4)"><span class="mb-head">' + ico('i-calendar') + 'นัดหมาย</span><span class="mb-head"><span style="color:var(--color-accent);display:inline-flex">' + ico('i-flag') + '</span>กำหนดส่งงาน</span></p><div class="list">';
+  h += list.length ? list.map(function (i) {
+    var sub = i.box === 'appt' ? 'นัดหมาย · ' + i.time + ' น.' : 'กำหนดส่งงาน · ' + (i.period || '');
+    return '<button class="row' + (S.hl === i.id ? ' is-hl' : '') + '" type="button" data-act="cal-item" data-id="' + i.id + '" data-hl="' + i.id + '"><span class="type-ico ' + (i.box === 'appt' ? 'type-ico--appt' : 'type-ico--task') + '">' + ico(i.box === 'appt' ? 'i-calendar' : 'i-flag') + '</span><span class="row__main"><b>' + esc(i.title) + '</b><span class="sm muted" style="display:block">' + esc(sub) + '</span></span>' + ico('i-next') + '</button>';
+  }).join('') : '<p class="empty">ไม่มีรายการในวันนี้ พิมพ์บอกพับในแชทได้เลย</p>';
+  return h + '</div></div>';
+}
+function boxCount(b) { return S.items.filter(function (i) { return i.box === b; }).length; }
+function renderMailbox() {
+  var h = '<header class="top"><div class="grow"><h1 class="screen-title" tabindex="-1">ตู้จดหมาย</h1><p class="sm muted">ทุกซองที่พับส่งมาอยู่ที่นี่</p></div></header><div class="scroll"><div class="boxes">';
+  Object.keys(BOX).forEach(function (k) {
+    var isD = S.dest === k;
+    h += '<button type="button" class="box' + (isD ? ' is-dest' : '') + '" data-act="box" data-box="' + k + '"><span class="leafy" aria-hidden="true">' + ico('i-leaf') + '</span><span class="ico">' + ico(BOX[k].icon) + '</span><b>' + BOX[k].name + '</b><span class="sm muted">' + boxCount(k) + ' รายการ</span><span class="dest">' + ico('i-check-circle') + 'ปลายทางล่าสุด</span></button>';
+  });
+  h += '</div><h2 class="sec">My Life Board</h2><div class="lbgrid">';
+  var oc = occSorted().filter(function (o) { return o.x.n >= 0; })[0], c = counts();
+  var cards = [
+    ['horoscope', 'i-star', 'ดูดวง', 'เปิดอ่านดวงวันนี้'],
+    ['occasions', 'i-gift', 'วันสำคัญ', oc ? oc.title + ' · ' + inN(oc.x.n) : 'ยังไม่มีวันสำคัญ'],
+    ['health', 'i-pulse', 'บันทึกสุขภาพ', 'อาหาร ' + c.f + ' มื้อ · ออกกำลังกาย ' + c.e + ' ครั้ง'],
+    ['journal', 'i-pen', 'บันทึกประจำวัน', todayDiary() ? 'ล่าสุด 11 พ.ย. 2569' : 'เขียนบันทึกวันนี้']
+  ];
+  cards.forEach(function (c2) {
+    h += '<button type="button" class="lb' + (S.dest === c2[0] ? ' is-dest' : '') + '" data-go="' + c2[0] + '"><span class="ico">' + ico(c2[1]) + '</span><b>' + c2[2] + '</b><span class="sm muted">' + esc(c2[3]) + '</span><span class="dest">' + ico('i-check-circle') + 'ปลายทางล่าสุด</span></button>';
+  });
+  return h + '</div></div>';
+}
+function renderHoroscope() {
+  var h = back('ดูดวง', 'ราศีกันย์') + '<div class="scroll"><div class="tabs" role="tablist" aria-label="ช่วงเวลา">';
+  [['today', 'วันนี้'], ['month', 'เดือนนี้']].forEach(function (t) { h += '<button role="tab" type="button" data-act="horo-tab" data-t="' + t[0] + '" aria-selected="' + (S.horoTab === t[0]) + '">' + t[1] + '</button>'; });
+  h += '</div><div class="card card--paper" role="tabpanel"><p class="eyebrow">' + ico('i-star', 'icon--s') + (S.horoTab === 'today' ? 'ดวงวันนี้ · 11 พ.ย. 2569' : 'ดวงเดือนพฤศจิกายน 2569') + '</p><p style="margin-top:8px">' + HORO[S.horoTab] + '</p></div>';
+  h += '<h2 class="sec">การตั้งค่า</h2><button class="switch" role="switch" type="button" aria-checked="' + S.horoOn + '" data-act="horo-toggle"><span><b>แสดงในหน้าวันนี้</b><span class="sm muted" style="display:block">เปิดไว้เพื่อให้ดวงขึ้นในหัวข้อ “จากตู้จดหมาย”</span></span><span class="st">' + (S.horoOn ? 'เปิด' : 'ปิด') + '</span><span class="tr" aria-hidden="true"></span></button></div>';
+  return h;
+}
+function renderOccasions() {
+  var h = back('วันสำคัญ', 'วันที่ไม่อยากพลาด') + '<div class="scroll"><div class="list">';
+  occSorted().forEach(function (o) {
+    h += '<div class="row"><span class="type-ico type-ico--appt">' + ico('i-gift') + '</span><div class="row__main"><b>' + esc(o.title) + '</b><p class="sm muted">' + fmtD(o.x.date) + ' · ' + inN(o.x.n) + '</p><p style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">' + (o.yearly ? '<span class="tag">' + ico('i-clock') + 'ทุกปี</span>' : '') + (o.remind !== 'ไม่เตือน' ? '<span class="tag">' + ico('i-bell') + o.remind + '</span>' : '') + '</p></div></div>';
+  });
+  return h + '</div><div class="sticky-act"><button class="btn btn--l btn--block" type="button" data-act="add-occ">' + ico('i-plus') + 'เพิ่มวันสำคัญ</button></div></div>';
+}
+function healthRow(x) {
+  var sub = x.type === 'food' ? (x.time ? x.time + ' น.' : 'ไม่ระบุเวลา') : [x.dur, x.time ? x.time + ' น.' : ''].filter(Boolean).join(' · ') || 'ไม่ระบุเวลา';
+  return '<div class="row' + (S.hl === x.id ? ' is-hl' : '') + '" data-hl="' + x.id + '"><span class="type-ico type-ico--appt">' + ico(x.type === 'food' ? 'i-food' : 'i-run') + '</span><div class="row__main"><b>' + esc(x.title) + '</b><p class="sm muted">' + esc(sub) + '</p></div>' + (S.hl === x.id ? '<span class="tag tag--new">' + ico('i-leaf') + 'เพิ่งเพิ่ม</span>' : '') + '</div>';
+}
+function renderHealth() {
+  var f = S.health.filter(function (x) { return x.type === 'food'; }), e = S.health.filter(function (x) { return x.type === 'ex'; });
+  var h = back('บันทึกสุขภาพ', 'วันนี้ 11 พ.ย. 2569') + '<div class="scroll">';
+  h += '<h2 class="sec" style="margin-top:0">อาหาร <span class="tag">' + f.length + ' มื้อ</span></h2><div class="list">' + (f.length ? f.map(healthRow).join('') : '<p class="empty">ยังไม่มีมื้ออาหารวันนี้</p>') + '<button class="btn btn--2 btn--block" type="button" data-act="add-food">' + ico('i-plus') + 'เพิ่มมื้ออาหาร</button></div>';
+  h += '<h2 class="sec">ออกกำลังกาย <span class="tag">' + e.length + ' ครั้ง</span></h2><div class="list">' + (e.length ? e.map(healthRow).join('') : '<p class="empty">ยังไม่มีการออกกำลังกายวันนี้</p>') + '<button class="btn btn--2 btn--block" type="button" data-act="add-ex">' + ico('i-plus') + 'เพิ่มการออกกำลังกาย</button></div></div>';
+  return h;
+}
+function renderJournal() {
+  var h = back('บันทึกประจำวัน', 'เห็นข้อความได้เฉพาะในหน้านี้') + '<div class="scroll"><div class="timeline">';
+  S.diary.slice().sort(function (a, b) { return b.d - a.d; }).forEach(function (j) {
+    h += '<article class="tl' + (S.hl === j.id ? ' is-hl' : '') + '" data-hl="' + j.id + '"><p class="when">' + dayF(j.d) + ' ' + j.d + ' พ.ย. 2569' + (S.hl === j.id ? ' · เพิ่งเพิ่ม' : '') + '</p><p class="txt">' + esc(j.text) + '</p></article>';
+  });
+  return h + '</div><div class="sticky-act"><button class="btn btn--l btn--block" type="button" data-act="write">' + ico('i-pen') + 'เขียนบันทึก</button></div></div>';
+}
+var R = { today: renderToday, calendar: renderCalendar, mailbox: renderMailbox, horoscope: renderHoroscope, occasions: renderOccasions, health: renderHealth, journal: renderJournal };
+function renderAside() {
+  var el = $('#aside'); if (!el || getComputedStyle(el).display === 'none') return;
+  var nextA = S.items.filter(function (i) { return i.box === 'appt' && i.d === 11; })[0];
+  var h = '<section class="aside__hero"><svg class="sprig" aria-hidden="true"><use href="#pub-sprig"/></svg><svg class="fly" role="img" aria-label="พับ นกพิราบสีครีมสะพายกระเป๋าหนังสีน้ำตาล คาบซองจดหมายบินอยู่"><use href="#pub-fly"/></svg><h2 class="aside__t">พับพร้อมส่งแล้ว</h2><p class="sm muted">' + esc(S.destName ? 'ส่งล่าสุดถึง ' + S.destName : 'พิมพ์มา เดี๋ยวพับเก็บให้') + '</p></section>';
+  h += '<section><h2 class="sec">ตู้จดหมาย</h2><div class="list">';
+  Object.keys(BOX).forEach(function (k) {
+    h += '<button type="button" class="row' + (S.dest === k ? ' is-hl' : '') + '" data-go="mailbox"><span class="type-ico type-ico--appt">' + ico(BOX[k].icon) + '</span><span class="row__main"><b>' + BOX[k].name + '</b><span class="sm muted" style="display:block">' + boxCount(k) + ' รายการ</span></span>' + (S.dest === k ? '<span class="tag tag--new">' + ico('i-check-circle') + 'ปลายทางล่าสุด</span>' : '') + '</button>';
+  });
+  h += '</div></section>';
+  if (nextA && S.route !== 'today') h += '<section><h2 class="sec">นัดหมายถัดไป</h2><div class="card card--paper next"><p class="eyebrow">' + ico('i-clock', 'icon--s') + 'วันนี้ ' + nextA.time + ' น.</p><p class="big">' + esc(nextA.title) + '</p><p class="sm muted">' + esc(nextA.place) + '</p></div></section>';
+  el.innerHTML = h;
+}
+window.addEventListener('resize', renderAside);
+function render(r) {
+  renderAside();
+  if (!R[r]) return;
+  var el = SCREENS[r], sc = $('.scroll', el), top = sc ? sc.scrollTop : 0, ae = document.activeElement;
+  var key = ae && el.contains(ae) ? (ae.dataset.act || ae.dataset.go || '') + '|' + (ae.dataset.id || ae.dataset.d || ae.dataset.box || ae.dataset.t || '') : null;
+  el.innerHTML = R[r]();
+  if (!MAIN.concat(['horoscope', 'occasions', 'health', 'journal']).length) return;
+  sc = $('.scroll', el); if (sc) sc.scrollTop = top;
+  if (key && key !== '|') { var m = $$('[data-act],[data-go]', el).filter(function (x) { return ((x.dataset.act || x.dataset.go || '') + '|' + (x.dataset.id || x.dataset.d || x.dataset.box || x.dataset.t || '')) === key; })[0]; if (m) m.focus({ preventScroll: true }); }
+}
+
+/* ---------- sheets ---------- */
+var sheetTrigger = null;
+function openSheet(title, body, onMount) {
+  closeSheet(true);
+  sheetTrigger = document.activeElement;
+  var w = document.createElement('div'); w.className = 'sheet-wrap'; w.id = 'sheetw';
+  w.innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><div class="sheet__head"><h2 id="sh-t">' + title + '</h2><button class="btn btn--ghost btn--icon btn--s" type="button" data-act="close-sheet" aria-label="ปิดหน้าต่าง">' + ico('i-close') + '</button></div>' + body + '</div>';
+  $('#app').appendChild(w); $('#body').inert = true;
+  w.addEventListener('click', function (e) { if (e.target === w) closeSheet(); });
+  var f = $('input,textarea,select,.sheet__foot .btn', w) || $('[data-act="close-sheet"]', w); (f || w).focus();
+  if (onMount) onMount(w);
+}
+function closeSheet(silent) {
+  var w = $('#sheetw'); if (!w) return;
+  w.remove(); $('#body').inert = false;
+  if (!silent && sheetTrigger && document.contains(sheetTrigger)) sheetTrigger.focus();
+}
+document.addEventListener('keydown', function (e) {
+  var w = $('#sheetw'); if (!w) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeSheet(); }
+  if (e.key === 'Tab') {
+    var f = $$('button,input,select,textarea,[tabindex="0"]', w).filter(function (x) { return !x.disabled; });
+    if (!f.length) return; var a = f[0], z = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+  }
+});
+function formErr(input, msg) {
+  input.setAttribute('aria-invalid', 'true');
+  var p = input.parentNode, e = $('.err', p); if (!e) { e = document.createElement('p'); e.className = 'err'; e.id = input.id + '-e'; p.appendChild(e); }
+  e.innerHTML = ico('i-x-circle') + '<span>ข้อผิดพลาด: ' + msg + '</span>'; input.setAttribute('aria-describedby', e.id); input.focus();
+}
+function sheetForm(fields, submitLabel, onSubmit) {
+  return '<form id="sf" novalidate>' + fields + '<div class="sheet__foot"><button type="button" class="btn btn--2" data-act="close-sheet">ยกเลิก</button><button type="submit" class="btn">' + submitLabel + '</button></div></form>';
+}
+function field(id, label, input, hint) { return '<div class="field"><label for="' + id + '">' + label + '</label>' + input + (hint ? '<p class="sm muted">' + hint + '</p>' : '') + '</div>'; }
+
+var SAMPLES = [
+  ['ต้องแก้สไลด์คืนนี้', 'งานที่ชัดเจน'], ['ขอเป็นพรุ่งนี้แทน', 'แก้ไขต่อเนื่อง'], ['นัดหมอวันศุกร์', 'ข้อมูลไม่ครบ พับถามกลับ'],
+  ['มื้อเที่ยงกินข้าวไก่ย่าง เย็นเดิน 30 นาที', 'หลายรายการในประโยคเดียว'], ['จดไดอารี่ วันนี้เหนื่อยแต่ดีใจที่ส่งงานทัน', 'บันทึกส่วนตัว'], ['ดูดวงวันนี้', 'ค้นดูข้อมูล']
+];
+
+/* ---------- chat ---------- */
+var thread = $('#thread'), cardN = 0, undo = {}, queue = Promise.resolve(), pending = null;
+function scrollEnd() { thread.scrollTop = thread.scrollHeight; }
+function addUser(t) { var b = document.createElement('div'); b.className = 'bubble bubble--user'; b.textContent = t; thread.appendChild(b); scrollEnd(); }
+function addBird(html) {
+  var m = document.createElement('div'); m.className = 'birdmsg';
+  m.innerHTML = '<svg class="ava" aria-hidden="true"><use href="#pub-bird"/></svg><div class="birdmsg__col">' + html + '</div>';
+  thread.appendChild(m); scrollEnd(); return m;
+}
+function seqHtml(dest, icon) {
+  return '<div class="seq" aria-label="ความคืบหน้าการส่งซอง"><div class="seq__track" aria-hidden="true"><svg class="seq__bird"><use href="#pub-bird"/></svg><span class="seq__line"></span><svg class="seq__env"><use href="#pub-env"/></svg><span class="seq__box">' + ico(icon) + '</span></div>' +
+    '<ol class="seq__steps"><li><span class="dot">' + ico('i-check') + '</span>พับซอง</li><li><span class="dot">' + ico('i-check') + '</span>บินไปส่ง</li><li><span class="dot">' + ico('i-check') + '</span>ถึงตู้แล้ว</li></ol><p class="seq__text" aria-live="polite"></p></div>';
+}
+function playSeq(el, dest, instant) {
+  var t = $('.seq__text', el), st = $$('.seq__steps li', el);
+  function set(i, msg) { st.forEach(function (s, k) { s.classList.toggle('is-done', k < i); s.classList.toggle('is-current', k === i); }); t.textContent = msg; }
+  if (instant) { set(3, 'ส่งถึง ' + dest + ' แล้ว'); el.classList.add('is-done'); return Promise.resolve(); }
+  var q = reduced.matches ? 450 : 1;
+  el.classList.add('is-folding'); set(0, 'พับกำลังพับข้อความเป็นซอง…');
+  return wait(q === 1 ? 900 : 450).then(function () { el.classList.remove('is-folding'); el.classList.add('is-flying'); set(1, 'พับหยิบซองแล้วกำลังบินไปที่ ' + dest + '…'); return wait(q === 1 ? 1700 : 450); })
+    .then(function () { el.classList.remove('is-flying'); el.classList.add('is-done'); set(3, 'ส่งถึง ' + dest + ' แล้ว'); });
+}
+function deliver(dest, icon, key, instant) {
+  var m = addBird(seqHtml(dest, icon)); var el = $('.seq', m);
+  return playSeq(el, dest, instant).then(function () { S.dest = key; S.destName = dest; renderAside(); if (S.route === 'mailbox') render('mailbox'); });
+}
+function confHtml(c) {
+  var id = 'c' + (++cardN);
+  var h = '<div class="conf" id="' + id + '" data-rec="' + (c.rec || '') + '" role="group" aria-label="ยืนยันการเก็บ"><p class="conf__title">' + ico('i-check-circle') + '<span class="ct">' + c.title + '</span></p><p class="conf__meta">' + c.meta + '</p><div class="conf__actions">';
+  c.actions.forEach(function (a, i) { h += '<button type="button" class="btn btn--s ' + (i === 0 ? '' : a.act === 'undo' ? 'btn--ghost' : 'btn--2') + '" data-act="c-' + a.act + '" data-card="' + id + '">' + a.label + '</button>'; });
+  h += '</div><p class="conf__status" role="status"></p></div>';
+  if (c.undo) undo[id] = c.undo; return h;
+}
+function itemTitleLine(it) { return it.box === 'work' ? 'เพิ่ม ‘' + esc(it.title) + '’ ไว้ในงาน' + esc((it.period || '').split(' ')[0]) + 'แล้ว' : 'เพิ่ม ‘' + esc(it.title) + '’ ไว้ใน' + BOX[it.box].name + 'แล้ว'; }
+function itemMeta(it) {
+  var m = 'ตู้จดหมาย: ' + BOX[it.box].name + ' · ' + (it.box === 'appt' ? 'วัน' + dLabel(it.d) + ' เวลา ' + it.time + ' น.' : 'กำหนด: ' + (it.period || '') + ' (' + dLabel(it.d) + ')');
+  return m + (it.remind ? ' · แจ้งเตือน ' + it.remind + ' น.' : '');
+}
+function refreshCards(id) {
+  $$('.conf[data-rec="' + id + '"]').forEach(function (c) {
+    if (c.classList.contains('is-undone')) return; var r = rec(id); if (!r || kind(id) !== 'item') return;
+    if (!c.dataset.edit) $('.ct', c).innerHTML = itemTitleLine(r);
+    $('.conf__meta', c).textContent = itemMeta(r);
+  });
+}
+function taskFrom(t) {
+  var m = /ต้อง(.+?)(คืนนี้|พรุ่งนี้|วันนี้|$)/.exec(t), title = (m ? m[1] : t).trim();
+  var due = /คืนนี้/.test(t) ? 'คืนนี้' : /พรุ่งนี้/.test(t) ? 'พรุ่งนี้' : 'วันนี้';
+  return { title: title, due: due };
+}
+async function clearTask(t, instant) {
+  var p = taskFrom(t), id = /สไลด์/.test(p.title) ? 'slide' : 't' + (++cardN), prev = rec(id);
+  var it = { id: id, box: 'work', title: p.title, d: p.due === 'พรุ่งนี้' ? 12 : 11, period: p.due, done: false };
+  S.items = S.items.filter(function (x) { return x.id !== id; }); S.items.push(it); S.lastTask = id;
+  await deliver('ตู้ ‘งาน’', 'i-briefcase', 'work', instant);
+  addBird(confHtml({ rec: id, title: itemTitleLine(it), meta: itemMeta(it), actions: [{ label: 'เปิดงาน', act: 'open' }, { label: 'แก้ไข', act: 'edit' }, { label: 'เลิกทำ', act: 'undo' }], undo: function () { S.items = S.items.filter(function (x) { return x.id !== id; }); if (prev) S.items.push(prev); } }));
+}
+async function followup() {
+  var it = rec(S.lastTask || 'slide');
+  if (!it) { addBird('<div class="bubble bubble--bird">พับยังไม่เจองานที่จะแก้ ลองบอกพับก่อนว่ามีอะไรต้องทำนะ</div>'); return; }
+  var before = { d: it.d, period: it.period };
+  it.d = 12; it.period = 'พรุ่งนี้';
+  await deliver('ตู้ ‘งาน’', 'i-briefcase', 'work');
+  addBird(confHtml({ rec: it.id, title: 'ย้าย ‘' + esc(it.title) + '’ เป็นพรุ่งนี้แล้ว', meta: 'ตู้จดหมาย: งาน · กำหนดใหม่: พรุ่งนี้ (' + dLabel(12) + ') · เดิม: ' + (before.period || ''), actions: [{ label: 'เปิดงาน', act: 'open' }, { label: 'แก้ไข', act: 'edit' }, { label: 'เลิกทำ', act: 'undo' }], undo: function () { it.d = before.d; it.period = before.period; } }));
+  var c = $$('.conf', thread).pop(); c.dataset.edit = '1';
+}
+function missing() {
+  pending = { title: 'นัดหมอ', d: 13 };
+  addBird('<div class="wait"><svg aria-hidden="true"><use href="#pub-env"/></svg><span>พับถือซอง ‘นัดหมอ วันศุกร์’ ไว้ก่อน ยังไม่ส่งเข้าตู้ เพราะขาดเวลา</span></div><div class="bubble bubble--bird">วันศุกร์กี่โมงดี?</div><div class="replies" role="group" aria-label="เลือกเวลา"><button class="btn btn--2 btn--s" type="button" data-act="reply" data-t="09:00">09:00 น.</button><button class="btn btn--2 btn--s" type="button" data-act="reply" data-t="14:00">14:00 น.</button><button class="btn btn--2 btn--s" type="button" data-act="reply" data-t="16:30">16:30 น.</button></div><p class="sm muted">หรือพิมพ์เวลาตอบได้เลย เช่น 10:30</p>');
+}
+async function resolveAppt(time) {
+  var p = pending; pending = null; $$('.replies .btn', thread).forEach(function (b) { b.disabled = true; });
+  var it = { id: 'doc' + (++cardN), box: 'appt', title: p.title, d: p.d, time: time, place: '' }; S.items.push(it);
+  await deliver('ตู้ ‘นัดหมาย’', 'i-calendar', 'appt');
+  addBird(confHtml({ rec: it.id, title: 'เพิ่ม ‘นัดหมอ’ ไว้ในนัดหมายแล้ว', meta: itemMeta(it), actions: [{ label: 'เปิดนัด', act: 'open' }, { label: 'แก้ไข', act: 'edit' }, { label: 'เลิกทำ', act: 'undo' }], undo: function () { S.items = S.items.filter(function (x) { return x !== it; }); } }));
+}
+async function healthMsg(t) {
+  var recs = [], meal = (/มื้อ(เช้า|เที่ยง|เย็น)/.exec(t) || [])[1], food = (/กิน(\S+)/.exec(t) || [])[1];
+  var ex = /(เดิน|วิ่ง|ว่ายน้ำ|โยคะ)\s*(\d+)\s*นาที/.exec(t);
+  if (food) recs.push({ id: 'hf' + (++cardN), type: 'food', title: food + (meal ? ' (มื้อ' + meal + ')' : ''), time: { 'เช้า': '08:00', 'เที่ยง': '12:30', 'เย็น': '18:30' }[meal] || '' });
+  if (ex) recs.push({ id: 'he' + (++cardN), type: 'ex', title: ex[1], dur: ex[2] + ' นาที', time: /เย็น\s*(เดิน|วิ่ง)/.test(t) ? '18:00' : '' });
+  if (!recs.length) return note(t, true);
+  recs.forEach(function (r) { S.health.push(r); });
+  await deliver('My Life Board › บันทึกสุขภาพ', 'i-pulse', 'health');
+  recs.forEach(function (r) {
+    addBird(confHtml({ rec: r.id, title: r.type === 'food' ? 'บันทึกอาหาร ‘' + esc(r.title) + '’ แล้ว' : 'บันทึกออกกำลังกาย ‘' + esc(r.title) + ' ' + r.dur + '’ แล้ว', meta: 'My Life Board › บันทึกสุขภาพ › ' + (r.type === 'food' ? 'อาหาร' : 'ออกกำลังกาย') + (r.time ? ' · ' + r.time + ' น.' : ''), actions: [{ label: 'แก้ไข', act: 'edit' }, { label: 'เลิกทำ', act: 'undo' }], undo: function () { S.health = S.health.filter(function (x) { return x !== r; }); } }));
+  });
+}
+async function diaryMsg(t) {
+  var text = t.replace(/^\s*จดไดอารี่\s*/, '').trim() || t, j = { id: 'j' + (++cardN), d: 11, text: text }; S.diary.push(j);
+  await deliver('My Life Board › บันทึกประจำวัน', 'i-pen', 'journal');
+  addBird(confHtml({ rec: j.id, title: 'เก็บไว้ในบันทึกประจำวันแล้ว', meta: 'My Life Board › บันทึกประจำวัน · 11 พ.ย. 2569', actions: [{ label: 'เปิดบันทึก', act: 'open' }, { label: 'เลิกทำ', act: 'undo' }], undo: function () { S.diary = S.diary.filter(function (x) { return x !== j; }); } }));
+}
+function lookup() { addBird('<div class="reading"><p class="eyebrow">' + ico('i-star', 'icon--s') + 'ดวงวันนี้ · ราศีกันย์</p><p>' + HORO.today.split(' ').slice(0, 5).join(' ') + '…</p><button class="btn btn--2 btn--s" type="button" data-go="horoscope">อ่านเพิ่มเติม</button></div>'); }
+async function note(t) {
+  var it = { id: 'n' + (++cardN) + 'x', box: 'notes', title: t }; S.items.push(it);
+  await deliver('ตู้ ‘โน้ตและไอเดีย’', 'i-bulb', 'notes');
+  addBird(confHtml({ rec: it.id, title: itemTitleLine(it), meta: itemMeta(it), actions: [{ label: 'แก้ไข', act: 'edit' }, { label: 'เลิกทำ', act: 'undo' }], undo: function () { S.items = S.items.filter(function (x) { return x !== it; }); } }));
+}
+async function handle(t) {
+  addUser(t);
+  if (pending) {
+    var m = /(\d{1,2})(?:[:.](\d{2}))?/.exec(t);
+    if (m && +m[1] < 24) return resolveAppt(('0' + m[1]).slice(-2) + ':' + (m[2] || '00'));
+    addBird('<div class="bubble bubble--bird">พับยังอ่านเวลาไม่ออก ลองพิมพ์เป็นตัวเลข เช่น 14:00 นะ</div>'); return;
+  }
+  if (/ดูดวง/.test(t)) return lookup();
+  if (/ไดอารี่/.test(t)) return diaryMsg(t);
+  if (/มื้อ|กิน|เดิน|วิ่ง|ออกกำลัง/.test(t) && /(มื้อ|กิน|เดิน\s*\d|วิ่ง\s*\d|\d+\s*นาที)/.test(t)) return healthMsg(t);
+  if (/แทน/.test(t)) return followup();
+  if (/นัดหมอ|นัด/.test(t)) return missing();
+  if (/^ต้อง|สไลด์/.test(t)) return clearTask(t);
+  return note(t);
+}
+function send(t) { t = (t || '').trim(); if (!t) return; if (S.route !== 'chat') go('chat'); queue = queue.then(function () { return handle(t); }).catch(function (e) { console.error(e); }); }
+
+var msg = $('#msg'), sendB = $('#send');
+function sync() { sendB.disabled = !msg.value.trim(); msg.style.height = 'auto'; msg.style.height = Math.min(msg.scrollHeight, 112) + 'px'; }
+msg.addEventListener('input', sync);
+$('#composer').addEventListener('submit', function (e) { e.preventDefault(); var v = msg.value; msg.value = ''; sync(); send(v); msg.focus(); });
+
+/* initial chat state: greeting + first delivered message */
+(async function () {
+  addBird('<div class="bubble bubble--bird">สวัสดี พับพร้อมแล้ว พิมพ์มาได้เลย เดี๋ยวพับเก็บให้</div>');
+  addUser('ต้องแก้สไลด์คืนนี้');
+  await clearTask('ต้องแก้สไลด์คืนนี้', true);
+  thread.style.scrollBehavior = 'auto'; scrollEnd(); thread.style.scrollBehavior = '';
+})();
+
+/* ---------- actions ---------- */
+function openRecord(id) {
+  var k = kind(id), r = rec(id); S.hl = id;
+  if (k === 'item') { if (r.box === 'work') go('today'); else if (r.box === 'appt') { S.calDay = r.d; go('calendar'); } else go('mailbox'); }
+  else if (k === 'health') go('health'); else go('journal');
+}
+function openEdit(id) {
+  var k = kind(id), r = rec(id); if (!r) return;
+  if (k === 'item') {
+    var opts = Object.keys(BOX).map(function (b) { return '<option value="' + b + '"' + (r.box === b ? ' selected' : '') + '>' + BOX[b].name + '</option>'; }).join('');
+    openSheet('แก้ไขรายการ', sheetForm(field('e-t', 'ชื่อรายการ', '<input class="input" id="e-t" value="' + esc(r.title) + '">') + field('e-b', 'ย้ายไปตู้จดหมาย', '<select class="input" id="e-b">' + opts + '</select>') + field('e-r', 'เวลาแจ้งเตือน (ไม่บังคับ)', '<input class="input" id="e-r" type="time" value="' + esc(r.remind || '') + '">', 'ถ้าไม่ตั้ง พับจะไม่แจ้งเตือน'), 'บันทึก'), function (w) {
+      $('#sf', w).addEventListener('submit', function (e) {
+        e.preventDefault(); var t = $('#e-t', w); if (!t.value.trim()) return formErr(t, 'กรุณากรอกชื่อรายการ');
+        r.title = t.value.trim(); var nb = $('#e-b', w).value; if (nb !== r.box) { r.box = nb; S.dest = nb; if (nb === 'appt' && !r.time) r.time = '09:00'; if (nb === 'work' && !r.period) r.period = 'วันนี้'; } r.remind = $('#e-r', w).value; if (S.route === 'chat') refreshCards(id);
+        closeSheet(); refreshAll(); toast('บันทึกการแก้ไขแล้ว: ย้ายไปตู้ ‘' + BOX[r.box].name + '’');
+      });
+    });
+  } else if (k === 'health') {
+    openSheet('แก้ไขบันทึก', sheetForm(field('e-t', r.type === 'food' ? 'เมนูอาหาร' : 'กิจกรรม', '<input class="input" id="e-t" value="' + esc(r.title) + '">'), 'บันทึก'), function (w) {
+      $('#sf', w).addEventListener('submit', function (e) { e.preventDefault(); var t = $('#e-t', w); if (!t.value.trim()) return formErr(t, 'กรุณากรอกชื่อ'); r.title = t.value.trim(); closeSheet(); refreshAll(); toast('บันทึกการแก้ไขแล้ว'); });
+    });
+  }
+}
+function refreshAll() { render(S.route); }
+function itemSheet(id) {
+  var r = rec(id); var body = '<dl class="kv"><dt>ประเภท</dt><dd>' + (r.box === 'appt' ? 'นัดหมาย' : 'กำหนดส่งงาน') + '</dd><dt>วันที่</dt><dd>' + dLabel(r.d) + ' 2569</dd><dt>' + (r.box === 'appt' ? 'เวลา' : 'กำหนด') + '</dt><dd>' + esc(r.box === 'appt' ? r.time + ' น.' : r.period || '') + '</dd>' + (r.place ? '<dt>สถานที่</dt><dd>' + esc(r.place) + '</dd>' : '') + '<dt>ตู้จดหมาย</dt><dd>' + BOX[r.box].name + '</dd>' + (r.remind ? '<dt>แจ้งเตือน</dt><dd>' + r.remind + ' น.</dd>' : '') + (r.box === 'work' ? '<dt>สถานะ</dt><dd>' + (r.done ? 'เสร็จแล้ว' : 'ยังไม่เสร็จ') + '</dd>' : '') + '</dl><div class="sheet__foot"><button class="btn btn--2" type="button" data-act="close-sheet">ปิด</button><button class="btn" type="button" data-act="edit-sheet" data-id="' + id + '">แก้ไข</button></div>';
+  openSheet(esc(r.title), body);
+}
+document.addEventListener('click', function (e) {
+  var g = e.target.closest('[data-go]'); if (g) { closeSheet(true); go(g.dataset.go); return; }
+  var a = e.target.closest('[data-act]'); if (!a) return;
+  var act = a.dataset.act, id = a.dataset.id;
+  if (act === 'close-sheet') return closeSheet();
+  if (act === 'samples') {
+    var h = '<div class="list">' + SAMPLES.map(function (s, i) { return '<button class="row" type="button" data-act="sample" data-i="' + i + '"><span class="row__main"><b>“' + esc(s[0]) + '”</b><span class="sm muted" style="display:block">' + s[1] + '</span></span>' + ico('i-send', 'icon--s') + '</button>'; }).join('') + '</div>';
+    return openSheet('ลองส่งตัวอย่างให้พับ', h);
+  }
+  if (act === 'sample') { var t = SAMPLES[+a.dataset.i][0]; closeSheet(true); send(t); setTimeout(function () { msg.focus({ preventScroll: true }); }, 0); return; }
+  if (act === 'reply') return send(a.dataset.t + ' น.');
+  if (act.indexOf('c-') === 0) {
+    var c = document.getElementById(a.dataset.card), rid = c.dataset.rec, st = $('.conf__status', c), ra = act.slice(2);
+    if (ra === 'open') return openRecord(rid);
+    if (ra === 'edit') { sheetTrigger = a; return openEdit(rid); }
+    if (ra === 'undo') {
+      if (undo[c.id]) undo[c.id](); c.classList.add('is-undone'); $('.ct', c).textContent = 'เลิกทำแล้ว พับนำซองกลับมาจากตู้';
+      $$('.btn', c).forEach(function (b) { b.disabled = true; }); st.textContent = 'รายการนี้ถูกนำออกจากตู้จดหมายแล้ว'; S.dest = null; S.destName = null; renderAside(); return;
+    }
+  }
+  if (act === 'done') { var it = rec(id); it.done = !it.done; render(S.route); toast(it.done ? 'เสร็จแล้ว: ' + it.title : 'ยกเลิกเสร็จแล้ว: ' + it.title); return; }
+  if (act === 'cal-day') { S.calDay = +a.dataset.d; return render('calendar'); }
+  if (act === 'cal-item') return itemSheet(id);
+  if (act === 'edit-sheet') { closeSheet(true); return openEdit(id); }
+  if (act === 'box') {
+    var b = a.dataset.box, l = S.items.filter(function (x) { return x.box === b; });
+    return openSheet(BOX[b].name + ' · ' + l.length + ' รายการ', '<div class="list">' + (l.map(function (x) { return '<div class="row"><span class="type-ico type-ico--appt">' + ico(BOX[b].icon) + '</span><div class="row__main"><b>' + esc(x.title) + '</b><p class="sm muted">' + (x.d ? dLabel(x.d) : 'ไม่มีกำหนด') + '</p></div></div>'; }).join('') || '<p class="empty">ยังไม่มีรายการ</p>') + '</div>');
+  }
+  if (act === 'horo-tab') { S.horoTab = a.dataset.t; return render('horoscope'); }
+  if (act === 'horo-toggle') { S.horoOn = !S.horoOn; render('horoscope'); return toast(S.horoOn ? 'เปิดแล้ว: ดวงจะแสดงในหน้าวันนี้' : 'ปิดแล้ว: ดวงจะไม่แสดงในหน้าวันนี้'); }
+  if (act === 'add-occ') {
+    return openSheet('เพิ่มวันสำคัญ', sheetForm(field('o-t', 'ชื่อวันสำคัญ', '<input class="input" id="o-t" placeholder="เช่น วันเกิดเพื่อนสนิท">') + field('o-d', 'วันที่', '<input class="input" id="o-d" type="date" value="2026-12-10">') + '<label class="chk"><input type="checkbox" id="o-y" checked>ทำซ้ำทุกปี</label>' + field('o-r', 'การเตือน (ไม่บังคับ)', '<select class="input" id="o-r"><option>ไม่เตือน</option><option>ตอนเช้าวันนั้น</option><option selected>ล่วงหน้า 1 วัน</option><option>ล่วงหน้า 7 วัน</option></select>'), 'เพิ่มวันสำคัญ'), function (w) {
+      $('#sf', w).addEventListener('submit', function (ev) {
+        ev.preventDefault(); var t = $('#o-t', w), d = $('#o-d', w);
+        if (!t.value.trim()) return formErr(t, 'กรุณากรอกชื่อวันสำคัญ'); if (!d.value) return formErr(d, 'กรุณาเลือกวันที่');
+        S.occ.push({ id: 'o' + (++cardN), title: t.value.trim(), date: d.value, yearly: $('#o-y', w).checked, remind: $('#o-r', w).value }); closeSheet(); refreshAll(); toast('เพิ่ม ‘' + t.value.trim() + '’ ไว้ในวันสำคัญแล้ว');
+      });
+    });
+  }
+  if (act === 'add-food' || act === 'add-ex') {
+    var food = act === 'add-food';
+    return openSheet(food ? 'เพิ่มมื้ออาหาร' : 'เพิ่มการออกกำลังกาย', sheetForm(field('h-t', food ? 'เมนูอาหาร' : 'กิจกรรม', '<input class="input" id="h-t" placeholder="' + (food ? 'เช่น ข้าวต้มปลา' : 'เช่น ว่ายน้ำ') + '">') + (food ? '' : field('h-m', 'ระยะเวลา (นาที, ไม่บังคับ)', '<input class="input" id="h-m" type="number" min="1" inputmode="numeric">')) + field('h-c', 'เวลา (ไม่บังคับ)', '<input class="input" id="h-c" type="time">'), 'บันทึก'), function (w) {
+      $('#sf', w).addEventListener('submit', function (ev) {
+        ev.preventDefault(); var t = $('#h-t', w); if (!t.value.trim()) return formErr(t, food ? 'กรุณากรอกเมนูอาหาร' : 'กรุณากรอกกิจกรรม');
+        var m = food ? '' : $('#h-m', w).value; S.health.push({ id: 'h' + (++cardN), type: food ? 'food' : 'ex', title: t.value.trim(), dur: m ? m + ' นาที' : '', time: $('#h-c', w).value }); closeSheet(); refreshAll(); toast('บันทึก ‘' + t.value.trim() + '’ แล้ว');
+      });
+    });
+  }
+  if (act === 'write') {
+    return openSheet('เขียนบันทึก · 11 พ.ย. 2569', sheetForm(field('j-t', 'วันนี้เป็นอย่างไรบ้าง', '<textarea class="input" id="j-t" placeholder="เล่าให้พับฟังได้เลย"></textarea>'), 'บันทึก'), function (w) {
+      $('#sf', w).addEventListener('submit', function (ev) { ev.preventDefault(); var t = $('#j-t', w); if (!t.value.trim()) return formErr(t, 'กรุณาเขียนอย่างน้อยหนึ่งประโยค'); var j = { id: 'j' + (++cardN), d: 11, text: t.value.trim() }; S.diary.push(j); S.hl = j.id; closeSheet(); refreshAll(); toast('เก็บไว้ในบันทึกประจำวันแล้ว'); });
+    });
+  }
+});
+
+/* keyboard-aware height on phones (iOS ignores interactive-widget) */
+var app = $('#app');
+function fit() {
+  var vv = window.visualViewport; if (!vv) return;
+  if (window.innerWidth <= 460) { app.style.height = vv.height + 'px'; app.classList.toggle('kbd', vv.height < window.innerHeight * 0.75); }
+  else { app.style.height = ''; app.classList.remove('kbd'); }
+}
+if (window.visualViewport) { visualViewport.addEventListener('resize', fit); visualViewport.addEventListener('scroll', function () { window.scrollTo(0, 0); }); }
+window.addEventListener('resize', fit); fit();
+msg.addEventListener('focus', function () { setTimeout(scrollEnd, 250); });
+
+show(location.hash.replace('#/', '') || 'chat', true);
+})();
+</script>
+</body>
+</html>
